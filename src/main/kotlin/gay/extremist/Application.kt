@@ -1,5 +1,8 @@
 package gay.extremist
 
+import gay.extremist.dao.AccountDao
+import gay.extremist.dao.AccountDaoImpl
+import gay.extremist.dao.DatabaseFactory
 import gay.extremist.plugins.*
 import io.ktor.server.application.*
 
@@ -13,4 +16,7 @@ fun Application.module() {
     configureSerialization()
     configureDatabases()
     configureRouting()
+
+    val dao : AccountDao = AccountDaoImpl()
+    DatabaseFactory.init()
 }
