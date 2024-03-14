@@ -21,6 +21,10 @@ class AccountDaoImpl : AccountDao{
         insertStatement.resultedValues?.singleOrNull()?.let(::resultRowToAccount)
     }
 
+    override suspend fun deleteAccount(accountID: Int) {
+        TODO("Not yet implemented")
+    }
+
     private fun resultRowToAccount(row : ResultRow) = Account(
         accountID = row[Accounts.accountID],
         username =  row[Accounts.username],
