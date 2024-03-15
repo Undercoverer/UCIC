@@ -11,12 +11,10 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
+    DatabaseFactory.init()
     configureSecurity()
     configureHTTP()
     configureSerialization()
-    configureDatabases()
     configureRouting()
 
-    val dao : AccountDao = AccountDaoImpl()
-    DatabaseFactory.init()
 }
