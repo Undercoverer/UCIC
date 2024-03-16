@@ -18,8 +18,18 @@ object Accounts : IntIdTable()  {
         .uniqueIndex()
         .autoIncrement()
     val username : Column<String> = varchar("username", 255)
+        .uniqueIndex()
     val email : Column<String>  = varchar("email", 255)
     val password : Column<String>  = varchar("password", 255)
     val token : Column<String>  = varchar("token", 255)
 
 }
+
+@Serializable
+data class LoginAccount(val username: String, val password: String)
+
+@Serializable
+data class RegisterAccount(val username: String, val email: String, val password: String)
+
+@Serializable
+data class UnprivilegedAccount(val accountID: Int, val username: String, val email: String)
