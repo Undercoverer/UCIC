@@ -20,20 +20,20 @@ class AccountDaoImpl : AccountDao {
 
     )
 
-    override suspend fun allAccounts(): List<Account> = dbQuery {
+    override suspend fun allAccounts(): List<Account> = dbQuery{
         Accounts
             .selectAll()
             .map(::resultRowToAccount)
     }
 
-    override suspend fun account(accountID: Int): Account? = dbQuery {
+    override suspend fun account(accountID: Int): Account? = dbQuery{
         Accounts
             .select { Accounts.accountID eq accountID }
             .map(::resultRowToAccount)
             .singleOrNull()
     }
 
-    override suspend fun addNewAccount(username: String, email: String, password: String): Account? = dbQuery {
+    override suspend fun addNewAccount(username: String, email: String, password: String): Account? = dbQuery{
         val insertStatement = Accounts.insert {
             it[Accounts.username] = username
             it[Accounts.email] = email
@@ -43,22 +43,19 @@ class AccountDaoImpl : AccountDao {
         insertStatement.resultedValues?.singleOrNull()?.let(::resultRowToAccount)
     }
 
-    override suspend fun editAccount(accountID: Int, username: String, email: String, password: String): Boolean =
-        dbQuery {
-            Accounts.update({ Accounts.accountID eq accountID }) {
-                it[Accounts.username] = username
-                it[Accounts.email] = email
-                it[Accounts.password] = password
-            } > 0
-        }
-
-    override suspend fun deleteAccount(accountID: Int): Boolean = dbQuery {
-        transaction {
-            Accounts.deleteWhere { Accounts.accountID eq accountID } > 0
-        }
+    override suspend fun editAccount(accountID: Int, username: String, email: String, password: String): Boolean = dbQuery{
+        Accounts.update({ Accounts.accountID eq accountID }) {
+            it[Accounts.username] = username
+            it[Accounts.email] = email
+            it[Accounts.password] = password
+        } > 0
     }
 
-    override suspend fun getToken(email: String, password: String): String {
+    override suspend fun deleteAccount(accountID: Int): Boolean = dbQuery{
+        Accounts.deleteWhere { Accounts.accountID eq accountID } > 0
+    }
+
+    override suspend fun getToken(email: String, password: String): String{
         return transaction {
             Accounts.select {
                 Accounts.email eq email
@@ -67,13 +64,11 @@ class AccountDaoImpl : AccountDao {
         }
     }
 
-    override suspend fun getAccountId(username: String): Int {
-        return transaction {
-            Accounts.select {
-                Accounts.username eq username
-            }.map { it[Accounts.accountID] }.singleOrNull() ?: throw Exception("No account with that email")
-        }
-
+    override suspend fun getAccountId(username: String): Int = dbQuery{
+        Accounts
+            .select { Accounts.username eq username }
+            .map { it[Accounts.accountID] }
+            .singleOrNull() ?: throw Exception("No account with that email")
     }
 
 }
