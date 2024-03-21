@@ -1,5 +1,6 @@
 package gay.extremist.models
 
+import gay.extremist.dao.Labels
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -26,4 +27,6 @@ class Video(id: EntityID<Int>) : Entity<Int>(id){
     var description by Videos.description
     var viewCount by Videos.viewCount
     var uploadDate by Videos.uploadDate
+
+    var tags by Tag via Labels
 }

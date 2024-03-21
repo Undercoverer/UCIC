@@ -1,5 +1,6 @@
 package gay.extremist.models
 
+import gay.extremist.dao.Labels
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -17,4 +18,6 @@ class Tag(id: EntityID<Int>) : Entity<Int>(id) {
 
     var tag by Tags.tag
     var isPreset by Tags.isPreset
+
+    var videos by Video via Labels
 }
