@@ -5,16 +5,7 @@ import gay.extremist.models.*
 
 
 class VideoDaoImpl : VideoDao {
-
-    override suspend fun allVideos(): List<Video> = dbQuery {
-        Video.all().toList()
-    }
-
-    override suspend fun video(id: Int): Video? = dbQuery {
-        Video.findById(id)
-    }
-
-    override suspend fun addNewVideo(creator: Account, videoPath: String, title: String, description: String): Video = dbQuery {
+    override suspend fun createVideo(creator: Account, videoPath: String, title: String, description: String): Video = dbQuery {
         Video.new {
             this.creator = creator
             this.videoPath = videoPath
@@ -23,7 +14,15 @@ class VideoDaoImpl : VideoDao {
         }
     }
 
-    override suspend fun editVideo(id: Int, title: String, description: String): Boolean = dbQuery {
+    override suspend fun readVideo(id: Int): Video? = dbQuery {
+        Video.findById(id)
+    }
+
+    override suspend fun readVideoAll(): List<Video> = dbQuery {
+        Video.all().toList()
+    }
+
+    override suspend fun updateVideo(id: Int, title: String, description: String): Boolean = dbQuery {
         val video = Video.findById(id)
         video?.title = title
         video?.description = description
@@ -41,5 +40,4 @@ class VideoDaoImpl : VideoDao {
             false
         }
     }
-
 }

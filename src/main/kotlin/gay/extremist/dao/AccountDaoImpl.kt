@@ -3,21 +3,12 @@ package gay.extremist.dao
 import gay.extremist.dao.DatabaseFactory.dbQuery
 import gay.extremist.models.*
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 
 
 class AccountDaoImpl : AccountDao {
 
-    override suspend fun allAccounts(): List<Account> = dbQuery {
-        Account.all().toList()
-    }
-
-    override suspend fun account(id: Int): Account? = dbQuery {
-        Account.findById(id)
-    }
-
-    override suspend fun addNewAccount(username: String, email: String, password: String): Account = dbQuery {
+    override suspend fun createAccount(username: String, email: String, password: String): Account = dbQuery {
         Account.new {
             this.username = username
             this.email = email
@@ -26,7 +17,15 @@ class AccountDaoImpl : AccountDao {
         }
     }
 
-    override suspend fun editAccount(id: Int, username: String, email: String, password: String): Boolean = dbQuery {
+    override suspend fun readAccount(id: Int): Account? = dbQuery {
+        Account.findById(id)
+    }
+
+    override suspend fun readAccountAll(): List<Account> = dbQuery {
+        Account.all().toList()
+    }
+
+    override suspend fun updateAccount(id: Int, username: String, email: String, password: String): Boolean = dbQuery {
         val account = Account.findById(id)
         account?.username = username
         account?.email = email
@@ -63,10 +62,10 @@ class AccountDaoImpl : AccountDao {
 
 }
 
-val dao: AccountDao = AccountDaoImpl().apply {
+val accountDao: AccountDao = AccountDaoImpl().apply {
     runBlocking {
-        if (allAccounts().isEmpty()) {
-            addNewAccount("admin", "admin@fakemail.com", "password")
+        if (readAccountAll().isEmpty()) {
+            createAccount("admin", "admin@fakemail.com", "password")
         }
     }
 }
