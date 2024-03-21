@@ -3,72 +3,62 @@ package gay.extremist.dao
 import gay.extremist.dao.DatabaseFactory.dbQuery
 import gay.extremist.models.*
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 
 
 class AccountDaoImpl : AccountDao {
 
-    private fun resultRowToAccount(row: ResultRow) = Account(
-        accountID = row[Accounts.accountID],
-        username = row[Accounts.username],
-        email = row[Accounts.email],
-        password = row[Accounts.password],
-        token = row[Accounts.token]
-
-    )
-
-    override suspend fun allAccounts(): List<Account> = dbQuery{
-        Accounts
-            .selectAll()
-            .map(::resultRowToAccount)
+    override suspend fun allAccounts(): List<Account> = dbQuery {
+        Account.all().toList()
     }
 
-    override suspend fun account(accountID: Int): Account? = dbQuery{
-        Accounts
-            .select { Accounts.accountID eq accountID }
-            .map(::resultRowToAccount)
-            .singleOrNull()
+    override suspend fun account(id: Int): Account? = dbQuery {
+        Account.findById(id)
     }
 
-    override suspend fun addNewAccount(username: String, email: String, password: String): Account? = dbQuery{
-        val insertStatement = Accounts.insert {
-            it[Accounts.username] = username
-            it[Accounts.email] = email
-            it[Accounts.password] = password
-            it[token] = UUID.nameUUIDFromBytes((username + password).toByteArray()).toString()
-        }
-        insertStatement.resultedValues?.singleOrNull()?.let(::resultRowToAccount)
-    }
-
-    override suspend fun editAccount(accountID: Int, username: String, email: String, password: String): Boolean = dbQuery{
-        Accounts.update({ Accounts.accountID eq accountID }) {
-            it[Accounts.username] = username
-            it[Accounts.email] = email
-            it[Accounts.password] = password
-        } > 0
-    }
-
-    override suspend fun deleteAccount(accountID: Int): Boolean = dbQuery{
-        Accounts.deleteWhere { Accounts.accountID eq accountID } > 0
-    }
-
-    override suspend fun getToken(email: String, password: String): String{
-        return transaction {
-            Accounts.select {
-                Accounts.email eq email
-                Accounts.password eq password
-            }.map { it[Accounts.token] }.singleOrNull() ?: ""
+    override suspend fun addNewAccount(username: String, email: String, password: String): Account = dbQuery {
+        Account.new {
+            this.username = username
+            this.email = email
+            this.password = password
+            this.token = UUID.nameUUIDFromBytes((username + password).toByteArray()).toString()
         }
     }
 
-    override suspend fun getAccountId(username: String): Int = dbQuery{
-        Accounts
-            .select { Accounts.username eq username }
-            .map { it[Accounts.accountID] }
-            .singleOrNull() ?: throw Exception("No account with that email")
+    override suspend fun editAccount(id: Int, username: String, email: String, password: String): Boolean = dbQuery {
+        val account = Account.findById(id)
+        account?.username = username
+        account?.email = email
+        account?.password = password
+
+        account != null
+    }
+
+    override suspend fun deleteAccount(id: Int): Boolean = dbQuery {
+        val account = Account.findById(id)
+        try {
+            account!!.delete()
+            true
+        } catch (e: NullPointerException) {
+            false
+        }
+    }
+
+    override suspend fun getToken(email: String, password: String): String = dbQuery {
+        Account.find {
+            Accounts.email eq email
+            Accounts.password eq password
+        }
+            .first()
+            .token
+    }
+
+    override suspend fun getIdByUsername(username: String): Int = dbQuery {
+        Account.find { Accounts.username eq username }
+            .first()
+            .id
+            .value
     }
 
 }

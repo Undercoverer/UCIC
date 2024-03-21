@@ -19,7 +19,7 @@ fun Application.configureRouting() {
             route("/token") {
                 get {
                     val account = call.receive<LoginAccount>()
-                    val accountId = accountDao.getAccountId(account.username)
+                    val accountId = accountDao.getIdByUsername(account.username)
                     val accountWithToken = accountDao.account(accountId)
                     if (accountWithToken?.password == account.password) {
                         call.respond(accountWithToken.token)
@@ -44,7 +44,7 @@ fun Application.configureRouting() {
                             if (account.token == call.request.headers["token"]) {
                                 call.respond(account)
                             } else {
-                                call.respond(UnprivilegedAccount(account.accountID, account.username, account.email))
+                                call.respond(UnprivilegedAccount(account.id.value , account.username, account.email))
                             }
                         }
 
@@ -56,7 +56,7 @@ fun Application.configureRouting() {
                     when (account) {
                         is Account -> {
                             if (account.token == call.request.headers["token"]) {
-                                accountDao.deleteAccount(account.accountID)
+                                accountDao.deleteAccount(account.id.value)
                                 call.respond(account)
                             } else {
                                 throw Exception("Account access token not provided")
@@ -71,7 +71,7 @@ fun Application.configureRouting() {
                     if (account.token != call.request.headers["token"]) {
                         throw Exception("Account access token not provided")
                     }
-                    accountDao.editAccount(account.accountID, account.username, account.email, account.password)
+                    accountDao.editAccount(account.id.value, account.username, account.email, account.password)
                     call.respond(account)
                 }
             }
