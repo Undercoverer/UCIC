@@ -5,9 +5,8 @@ import gay.extremist.models.Video
 
 interface VideoDao {
     suspend fun allVideos(): List<Video>
-    suspend fun video(videoID: Int): Video?
-    suspend fun addNewVideo(creatorID: Int, videoPath: String, title: String, description: String): Video?
-    suspend fun editVideo(videoID: Int, title: String, description: String): Boolean
-    suspend fun deleteVideo(videoID: Int): Boolean
-    suspend fun getCreator(videoID: Int): Account
+    suspend fun video(id: Int): Video?
+    suspend fun addNewVideo(creator: Account, videoPath: String, title: String, description: String): Video?
+    suspend fun editVideo(id: Int, title: String, description: String): Boolean
+    suspend fun deleteVideo(id: Int): Boolean
 }
