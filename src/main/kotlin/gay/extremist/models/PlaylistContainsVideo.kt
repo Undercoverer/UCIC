@@ -2,10 +2,10 @@ package gay.extremist.models
 
 import org.jetbrains.exposed.sql.Table
 
-object TagLabelsVideo: Table() {
-    private val tag = reference("tagID", Tags)
+object PlaylistContainsVideo: Table() {
+    private val playlist = reference("playlistID", Tags)
     private val video = reference("videoID", Videos)
     override val primaryKey = PrimaryKey(
-        tag, video, name="PK_TagLabelsVideo_tag_vid"
+        playlist, video, name="PK_PlaylistContainsVideo_pl_vid"
     )
 }

@@ -1,7 +1,6 @@
 package gay.extremist.plugins
 
-import gay.extremist.dao.accountDao
-import gay.extremist.dao.tagDao
+import gay.extremist.dao.*
 import gay.extremist.models.Account
 import gay.extremist.models.LoginAccount
 import gay.extremist.models.RegisterAccount
@@ -79,11 +78,20 @@ fun Application.configureRouting() {
         }
         // Videos
         route("/videos") {
+            val videoDao = videoDao
 
         }
         // Tags
         route("/tags") {
             val tagDao = tagDao
+        }
+        // Playlists
+        route("/playlists") {
+            val playlistDao = playlistDao
+        }
+        // Comments
+        route("/comments") {
+            val commentDao = commentDao
         }
     }
 }
