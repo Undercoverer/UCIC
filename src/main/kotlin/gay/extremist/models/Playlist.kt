@@ -1,0 +1,2 @@
+package gay.extremist.models
+

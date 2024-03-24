@@ -1,7 +1,5 @@
-package gay.extremist.dao
+package gay.extremist.models
 
-import gay.extremist.models.Tags
-import gay.extremist.models.Videos
 import org.jetbrains.exposed.sql.Table
 
 object TagLabelsVideo : Table() {

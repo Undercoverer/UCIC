@@ -2,6 +2,7 @@ package gay.extremist.dao
 
 import gay.extremist.dao.DatabaseFactory.dbQuery
 import gay.extremist.models.*
+import kotlinx.coroutines.runBlocking
 
 
 class VideoDaoImpl : VideoDao {
@@ -41,3 +42,5 @@ class VideoDaoImpl : VideoDao {
         }
     }
 }
+
+val videoDao: VideoDao = VideoDaoImpl()
