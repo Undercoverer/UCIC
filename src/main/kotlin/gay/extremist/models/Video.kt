@@ -1,5 +1,6 @@
 package gay.extremist.models
 
+import gay.extremist.models.Video.Companion.referrersOn
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -17,7 +18,7 @@ object Videos: IntIdTable() {
     val uploadDate: Column<java.time.LocalDateTime> = datetime("uploadDate").defaultExpression(CurrentDateTime)
 }
 
-class Video(id: EntityID<Int>): Entity<Int>(id){
+class Video(id: EntityID<Int>): Entity<Int>(id) {
     companion object: EntityClass<Int, Video> (Videos)
 
     var creator by Account referencedOn Videos.creatorID
@@ -29,4 +30,5 @@ class Video(id: EntityID<Int>): Entity<Int>(id){
 
     var tags by Tag via TagLabelsVideo
     val comments by Comment referrersOn Comments.videoID
+    val ratings by Rating referrersOn Ratings.videoID
 }

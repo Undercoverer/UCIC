@@ -22,6 +22,7 @@ object DatabaseFactory {
                 PlaylistContainsVideo,
                 Videos,
                 Comments,
+                Ratings,
                 Tags,
                 TagLabelsVideo
             )

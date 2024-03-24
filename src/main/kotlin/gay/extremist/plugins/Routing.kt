@@ -93,5 +93,9 @@ fun Application.configureRouting() {
         route("/comments") {
             val commentDao = commentDao
         }
+        // Ratings
+        route("/ratings") {
+            val ratingDao = ratingDao
+        }
     }
 }
