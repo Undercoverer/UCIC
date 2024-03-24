@@ -1,6 +1,5 @@
 package gay.extremist.models
 
-import gay.extremist.dao.TagLabelsVideo
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID

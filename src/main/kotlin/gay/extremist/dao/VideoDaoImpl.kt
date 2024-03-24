@@ -2,15 +2,23 @@ package gay.extremist.dao
 
 import gay.extremist.dao.DatabaseFactory.dbQuery
 import gay.extremist.models.*
+import org.jetbrains.exposed.sql.SizedCollection
 
 
 class VideoDaoImpl : VideoDao {
-    override suspend fun createVideo(creator: Account, videoPath: String, title: String, description: String): Video = dbQuery {
+    override suspend fun createVideo(
+        creator: Account,
+        videoPath: String,
+        title: String,
+        description: String,
+        tags: SizedCollection<Tag>
+    ): Video = dbQuery {
         Video.new {
             this.creator = creator
             this.videoPath = videoPath
             this.title = title
             this.description = description
+            this.tags = tags
         }
     }
 
@@ -41,3 +49,5 @@ class VideoDaoImpl : VideoDao {
         }
     }
 }
+
+val videoDao: VideoDao = VideoDaoImpl()

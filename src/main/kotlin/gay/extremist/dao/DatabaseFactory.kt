@@ -16,7 +16,16 @@ object DatabaseFactory {
             password = "12345678"
         )
         transaction (database) {
-            SchemaUtils.create(Accounts, Videos, Tags, TagLabelsVideo)
+            SchemaUtils.create(
+                Accounts,
+                Playlists,
+                PlaylistContainsVideo,
+                Videos,
+                Comments,
+                Ratings,
+                Tags,
+                TagLabelsVideo
+            )
         }
     }
     suspend fun <T> dbQuery(block: suspend () -> T): T =
