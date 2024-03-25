@@ -6,7 +6,7 @@ import gay.extremist.models.Video
 import org.jetbrains.exposed.dao.id.EntityID
 
 interface RatingDao {
-    suspend fun createRating(video: Video, account: Account, rating: Int): Rating?
+    suspend fun createRating(video: Video, account: Account, rating: Int): Rating
     suspend fun readRating(id: Int): Rating?
     suspend fun readRatingAll(): List<Rating>
     suspend fun updateRating(id: Int, rating: Int): Boolean

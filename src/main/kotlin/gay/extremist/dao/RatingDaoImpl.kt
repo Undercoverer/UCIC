@@ -4,7 +4,7 @@ import gay.extremist.dao.DatabaseFactory.dbQuery
 import gay.extremist.models.*
 
 class RatingDaoImpl : RatingDao {
-    override suspend fun createRating(video: Video, account: Account, rating: Int): Rating? = dbQuery {
+    override suspend fun createRating(video: Video, account: Account, rating: Int): Rating = dbQuery {
         Rating.new{
             this.video = video
             this.account = account

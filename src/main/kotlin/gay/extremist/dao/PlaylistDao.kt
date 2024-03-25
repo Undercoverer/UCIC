@@ -5,7 +5,7 @@ import gay.extremist.models.Playlist
 import gay.extremist.models.Video
 
 interface PlaylistDao {
-    suspend fun createPlaylist(owner: Account, name: String, description: String): Playlist?
+    suspend fun createPlaylist(owner: Account, name: String, description: String): Playlist
     suspend fun readPlaylist(id: Int): Playlist?
     suspend fun readPlaylistAll(): List<Playlist>
     suspend fun updatePlaylist(id: Int, name: String, description: String): Boolean

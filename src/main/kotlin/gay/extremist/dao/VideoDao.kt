@@ -16,5 +16,6 @@ interface VideoDao {
     suspend fun readVideo(id: Int): Video?
     suspend fun readVideoAll(): List<Video>
     suspend fun updateVideo(id: Int, title: String, description: String): Boolean
+    suspend fun updateVideoPath(id: Int, videoPath: String): Boolean
     suspend fun deleteVideo(id: Int): Boolean
 }
