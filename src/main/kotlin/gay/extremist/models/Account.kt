@@ -26,6 +26,7 @@ class Account(id: EntityID<Int>): Entity<Int>(id) {
     var token by Accounts.token
 
     val playlists by Playlist referrersOn Playlists.ownerId
+    val videos by Video referrersOn Videos.creatorID
 }
 
 @Serializable

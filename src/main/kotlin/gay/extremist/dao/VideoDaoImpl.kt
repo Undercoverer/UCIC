@@ -38,6 +38,13 @@ class VideoDaoImpl : VideoDao {
         video != null
     }
 
+    override suspend fun updateVideoPath(id: Int, videoPath: String): Boolean = dbQuery{
+        val video = Video.findById(id)
+        video?.videoPath = videoPath
+
+        video != null
+    }
+
     override suspend fun deleteVideo(id: Int): Boolean = dbQuery {
         val video = Video.findById(id)
 
