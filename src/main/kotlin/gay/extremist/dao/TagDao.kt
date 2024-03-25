@@ -8,4 +8,5 @@ interface TagDao {
     suspend fun readTagAll(): List<Tag>
     suspend fun updateTag(id: Int, isPreset: Boolean, category: String?): Boolean
     suspend fun deleteTag(id: Int): Boolean
+    suspend fun findTagByName(it: String): Tag?
 }
