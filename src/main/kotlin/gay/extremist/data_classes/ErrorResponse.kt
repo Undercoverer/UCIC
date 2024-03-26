@@ -12,6 +12,9 @@ data class ErrorResponse(
     var data: @Contextual Any? = null,
 ) {
     companion object {
+        val videoUploadFailed = ErrorResponse(
+            error = "video", message = "Video upload failed", status = HttpStatusCode.InternalServerError.value
+        )
         val videoNotFound = ErrorResponse(
             error = "video", message = "Video not found", status = HttpStatusCode.NotFound.value
         )

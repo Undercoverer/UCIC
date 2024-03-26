@@ -1,18 +1,14 @@
 package gay.extremist.plugins.routes
 
 import gay.extremist.dao.accountDao
-import gay.extremist.data_classes.ErrorResponse
-import gay.extremist.models.LoginAccount
-import gay.extremist.models.RegisterAccount
-import gay.extremist.models.RegisteredAccount
-import gay.extremist.models.UnprivilegedAccount
+import gay.extremist.data_classes.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
-fun Route.createAccountRoutes() = route("/account") {
+fun Route.createAccountRoutes() = route("/accounts") {
     val accountDao = accountDao
 
     // DONE
@@ -112,7 +108,7 @@ fun Route.createAccountRoutes() = route("/account") {
 //
 //            val account = accountDao.readAccount(accountId.toInt())
 
-            call.respond(HttpStatusCode.NotImplemented, "Enpoint Not implemented")
+            call.respond(HttpStatusCode.NotImplemented, "Endpoint Not implemented")
         }
     }
 
