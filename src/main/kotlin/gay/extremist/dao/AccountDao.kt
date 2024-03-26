@@ -9,6 +9,6 @@ interface AccountDao {
     suspend fun readAccountAll(): List<Account>
     suspend fun updateAccount(id: Int, username: String, email: String, password: String): Boolean
     suspend fun deleteAccount(id: Int): Boolean
-    suspend fun getToken(email: String, password: String): String
-    suspend fun getIdByUsername(username: String): Int
+    suspend fun getToken(email: String, password: String): String?
+    suspend fun getIdByUsername(username: String): Int?
 }
