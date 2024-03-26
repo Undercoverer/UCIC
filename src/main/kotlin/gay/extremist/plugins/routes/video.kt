@@ -3,6 +3,7 @@ package gay.extremist.plugins.routes
 import gay.extremist.dao.accountDao
 import gay.extremist.dao.tagDao
 import gay.extremist.dao.videoDao
+import gay.extremist.data_classes.ErrorResponse
 import gay.extremist.models.Tag
 import io.ktor.http.*
 import io.ktor.http.content.*
@@ -15,77 +16,93 @@ import org.jetbrains.exposed.sql.SizedCollection
 import java.io.File
 import java.util.*
 
+val BASE_STORAGE_PATH = System.getenv("STORAGE_PATH") ?: "/var/storage"
+
 fun Route.createVideoRoutes() = route("/videos") {
     val videoDao = videoDao
     route("/{id}") {
         get {
-            val video = call.parameters["id"]?.toInt()?.let { vid -> videoDao.readVideo(vid) }
-            // Respond with link to manifest.mpd file
-            val manifestPath = "${
-                video?.videoPath ?: call.respondText("Video not found", status = HttpStatusCode.NotFound)
-            }/manifest.mpd"
-            call.respondText(manifestPath)
+            val videoId = call.parameters["id"]
+            videoId ?: return@get call.respond(ErrorResponse.videoIdNotProvided)
+
+            runCatching { videoId.toInt() }.onFailure {
+                return@get call.respond(ErrorResponse.videoNonNumericId)
+            }
+
+            val video = videoDao.readVideo(videoId.toInt())
+            video ?: return@get call.respond(ErrorResponse.videoNotFound)
+
+            // TODO WORK ON FFMPEG PROCESSING AND FINAL FILE LOCATIONS
+//            // Respond with link to manifest.mpd file
+//            val manifestPath = "${
+//                video?.videoPath ?: call.respondText("Video not found", status = HttpStatusCode.NotFound)
+//            }/manifest.mpd"
+//            call.respondText(manifestPath)
         }
     }
 
     post {
-        // Check to see if the id and token in the header match up to an account
-        val accountId = call.request.headers["accountId"]?.let { it1 -> accountDao.getIdByUsername(it1) }
-        if (accountId == null) {
-            throw Exception("accountId not provided in header")
-        }
-        val account = accountId.let { accountDao.readAccount(it) }
-        if (account == null) {
-            throw Exception("Account not found")
-        }
-        if (account.token != call.request.headers["token"]) {
-            throw Exception("Account access token not provided")
+        val accountId = call.request.headers["accountId"]
+        accountId ?: return@post call.respond(ErrorResponse.accountIdNotProvided)
+
+        runCatching { accountId.toInt() }.onFailure {
+            return@post call.respond(ErrorResponse.accountNonNumericId)
         }
 
-        val multipartData = call.receiveMultipart()
-        var title: String? = null
-        var fileName: String? = null
-        var fileDescription: String? = null
-        var tags: Array<String>? = null
-        multipartData.forEachPart { part ->
+        val token = call.request.headers["token"]
+        token ?: return@post call.respond(ErrorResponse.accountTokenNotProvided)
+
+        val account = accountDao.readAccount(accountId.toInt())
+        account ?: return@post call.respond(ErrorResponse.accountNotFound)
+
+        if (account.token != token) return@post call.respond(ErrorResponse.tokenInvalid)
+
+
+        var title = ""
+        var fileName = ""
+        var fileDescription = ""
+        var tags: Array<String> = emptyArray()
+
+        call.receiveMultipart().forEachPart { part ->
             when (part) {
                 is PartData.FormItem -> {
                     when (part.name) {
                         "title" -> title = part.value
                         "description" -> fileDescription = part.value
                         "tags" -> tags = Json.decodeFromString<Array<String>>(part.value)
-                        else -> {} // Ignore other form fields
+                        else -> {}
                     }
                 }
 
                 is PartData.FileItem -> {
-                    fileName = part.originalFileName as String
-                    val fileBytes = part.streamProvider().readBytes()
-                    val filePath = "uploads/$fileName"
-                    File(filePath).writeBytes(fileBytes)
+                    val file = File("$BASE_STORAGE_PATH/videos/${account.id}/$fileName")
+                    file.parentFile.mkdirs()
+                    file.appendBytes(part.streamProvider().readBytes())
                 }
 
                 else -> {}
             }
-
             part.dispose()
         }
-        if (title == null || fileName == null || fileDescription == null || tags == null) {
-            throw Exception("Missing required fields")
 
-        }
+
         // Convert String tags to Tag objects
-        val tagObjects: SizedCollection<Tag> =
-            if (tags!!.isEmpty()) SizedCollection(delegate = Collections.emptyList()) else SizedCollection(delegate = tags!!.map {
-                tagDao.findTagByName(it)
-            }.filterNotNull())
+        val tagObjects: SizedCollection<Tag> = when {
+            tags.isEmpty() -> {
+                SizedCollection(delegate = Collections.emptyList())
+            }
 
+            else -> {
+                SizedCollection(delegate = tags.map {
+                    tagDao.findTagByName(it)
+                }.filterNotNull())
+            }
+        }
 
         val video = videoDao.createVideo(
-            account, , fileName!!, fileDescription!!, tagObjects
+            account, "$BASE_STORAGE_PATH/videos/${account.id}/$fileName", title, fileDescription, tagObjects,
         )
 
-
+        call.respond(video.id)
     }
-
 }
