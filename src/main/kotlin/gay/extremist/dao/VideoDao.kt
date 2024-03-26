@@ -12,7 +12,7 @@ interface VideoDao {
         title: String,
         description: String,
         tags: SizedCollection<Tag>
-    ): Video?
+    ): Video
     suspend fun readVideo(id: Int): Video?
     suspend fun readVideoAll(): List<Video>
     suspend fun updateVideo(id: Int, title: String, description: String): Boolean
