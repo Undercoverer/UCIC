@@ -38,6 +38,8 @@ fun Route.createVideoRoutes() = route("/videos") {
 //                video?.videoPath ?: call.respondText("Video not found", status = HttpStatusCode.NotFound)
 //            }/manifest.mpd"
 //            call.respondText(manifestPath)
+
+            call.respond(video.videoPath)
         }
     }
 
@@ -63,7 +65,12 @@ fun Route.createVideoRoutes() = route("/videos") {
         var fileDescription = ""
         var tags: Array<String> = emptyArray()
 
-        call.receiveMultipart().forEachPart { part ->
+        val multiPartData = runCatching{
+            call.receiveMultipart()
+        }.getOrNull() ?: return@post call.respond(ErrorResponse.videoUploadFailed)
+
+        val timestamp = System.currentTimeMillis()
+        multiPartData.forEachPart { part ->
             when (part) {
                 is PartData.FormItem -> {
                     when (part.name) {
@@ -75,7 +82,8 @@ fun Route.createVideoRoutes() = route("/videos") {
                 }
 
                 is PartData.FileItem -> {
-                    val file = File("$BASE_STORAGE_PATH/videos/${account.id}/$fileName")
+                    fileName = part.originalFileName ?: ""
+                    val file = File("$BASE_STORAGE_PATH/videos/${account.id}/$timestamp/$fileName")
                     file.parentFile.mkdirs()
                     file.appendBytes(part.streamProvider().readBytes())
                 }
@@ -100,9 +108,9 @@ fun Route.createVideoRoutes() = route("/videos") {
         }
 
         val video = videoDao.createVideo(
-            account, "$BASE_STORAGE_PATH/videos/${account.id}/$fileName", title, fileDescription, tagObjects,
+            account, "$BASE_STORAGE_PATH/videos/${account.id}/$timestamp/$fileName", title, fileDescription, tagObjects,
         )
 
-        call.respond(video.id)
+        call.respond(video.id.value)
     }
 }
