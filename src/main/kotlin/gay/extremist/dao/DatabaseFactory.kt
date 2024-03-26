@@ -10,13 +10,21 @@ import gay.extremist.models.*
 object DatabaseFactory {
     fun init() {
         val database = Database.connect(
-            url = "jdbc:postgresql://localhost:5432/capstone_db",
+            url = """
+            jdbc:postgresql://${
+                System.getenv("DB_HOST") ?: "db"
+            }:${
+                System.getenv("DB_PORT") ?: "5432"
+            }/${
+                System.getenv("DB_NAME") ?: "capstone_db"
+            }
+            """.trimIndent(),
             driver = "org.postgresql.Driver",
-            user = "postgres",
-            password = "12345678"
+            user = System.getenv("DB_USER") ?: "postgres",
+            password = System.getenv("DB_PASSWORD")  ?: "12345678"
         )
         transaction (database) {
-            SchemaUtils.create(
+            SchemaUtils.createMissingTablesAndColumns(
                 Accounts,
                 Playlists,
                 PlaylistContainsVideo,
