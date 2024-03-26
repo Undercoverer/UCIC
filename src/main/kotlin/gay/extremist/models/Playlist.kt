@@ -5,9 +5,10 @@ import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.ReferenceOption
 
 object Playlists: IntIdTable() {
-    val ownerId: Column<EntityID<Int>> = reference("ownerID", Accounts)
+    val ownerId: Column<EntityID<Int>> = reference("ownerID", Accounts, onDelete = ReferenceOption.CASCADE)
     val name: Column<String> = varchar("name", 255)
     val description: Column<String> = varchar("description", 255)
 }

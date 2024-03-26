@@ -5,11 +5,12 @@ import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.ReferenceOption
 
 object Comments: IntIdTable() {
-    val accountID: Column<EntityID<Int>>  = reference("accountID", Accounts)
-    val videoID: Column<EntityID<Int>>  = reference("videoID", Videos)
-    val parentID: Column<EntityID<Int>?>  = reference("parentID", Comments).nullable()
+    val accountID: Column<EntityID<Int>>  = reference("accountID", Accounts, onDelete = ReferenceOption.CASCADE)
+    val videoID: Column<EntityID<Int>>  = reference("videoID", Videos, onDelete = ReferenceOption.CASCADE)
+    val parentID: Column<EntityID<Int>?>  = reference("parentID", Comments, onDelete = ReferenceOption.CASCADE).nullable()
     val comment: Column<String> = text("comment")
 }
 

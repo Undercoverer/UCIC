@@ -19,6 +19,7 @@ class VideoDaoImpl : VideoDao {
             this.title = title
             this.description = description
             this.tags = tags
+            this.viewCount = 0
         }
     }
 
