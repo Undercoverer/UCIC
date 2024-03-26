@@ -4,7 +4,6 @@ import gay.extremist.dao.accountDao
 import gay.extremist.dao.tagDao
 import gay.extremist.dao.videoDao
 import gay.extremist.models.Tag
-import gay.extremist.util.FFMPEGProcess
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*
@@ -23,10 +22,7 @@ fun Route.createVideoRoutes() = route("/videos") {
             val video = call.parameters["id"]?.toInt()?.let { vid -> videoDao.readVideo(vid) }
             // Respond with link to manifest.mpd file
             val manifestPath = "${
-                video?.videoPath ?: call.respondText(
-                    "Video not found",
-                    status = HttpStatusCode.NotFound
-                )
+                video?.videoPath ?: call.respondText("Video not found", status = HttpStatusCode.NotFound)
             }/manifest.mpd"
             call.respondText(manifestPath)
         }
@@ -38,7 +34,7 @@ fun Route.createVideoRoutes() = route("/videos") {
         if (accountId == null) {
             throw Exception("accountId not provided in header")
         }
-        val account = accountId?.let { accountDao.readAccount(it) }
+        val account = accountId.let { accountDao.readAccount(it) }
         if (account == null) {
             throw Exception("Account not found")
         }
@@ -80,20 +76,15 @@ fun Route.createVideoRoutes() = route("/videos") {
         }
         // Convert String tags to Tag objects
         val tagObjects: SizedCollection<Tag> =
-            if (tags!!.isEmpty()) SizedCollection(delegate = Collections.emptyList()) else
-                SizedCollection(delegate = tags!!.map { tagDao.findTagByName(it) }.filterNotNull())
+            if (tags!!.isEmpty()) SizedCollection(delegate = Collections.emptyList()) else SizedCollection(delegate = tags!!.map {
+                tagDao.findTagByName(it)
+            }.filterNotNull())
 
 
         val video = videoDao.createVideo(
-            account,
-            "null",
-            fileName!!,
-            fileDescription!!,
-            tagObjects
+            account, , fileName!!, fileDescription!!, tagObjects
         )
 
-        // Start processing the video
-//        FFMPEGProcess(video).start(video).getPath()
 
     }
 
