@@ -18,4 +18,6 @@ interface VideoDao {
     suspend fun updateVideo(id: Int, title: String, description: String): Boolean
     suspend fun updateVideoPath(id: Int, videoPath: String): Boolean
     suspend fun deleteVideo(id: Int): Boolean
+    suspend fun addTagsToVideo(id: Int, tags: List<Tag>): Boolean
+    suspend fun removeTagsFromVideo(id: Int, tags: List<Tag>): Boolean
 }

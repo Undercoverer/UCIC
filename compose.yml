@@ -9,7 +9,7 @@
           condition: service_healthy
     db:
       image: postgres
-      user: "1000:100"
+#      user: "1000:100"
       volumes:
         - ./tmp/db:/var/lib/postgresql/data
       environment:

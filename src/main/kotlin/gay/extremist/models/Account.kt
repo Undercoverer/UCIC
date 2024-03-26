@@ -27,6 +27,12 @@ class Account(id: EntityID<Int>): Entity<Int>(id) {
 
     val playlists by Playlist referrersOn Playlists.ownerId
     val videos by Video referrersOn Videos.creatorID
+
+    var followedAccounts by Account.via(
+            AccountFollowsAccount.follower,
+            AccountFollowsAccount.account
+        )
+    var followedTags by Tag via AccountFollowsTag
 }
 
 @Serializable

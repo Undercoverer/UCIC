@@ -24,8 +24,10 @@ object DatabaseFactory {
             password = System.getenv("DB_PASSWORD")  ?: "12345678"
         )
         transaction (database) {
-            SchemaUtils.createMissingTablesAndColumns(
+            SchemaUtils.create(
                 Accounts,
+                AccountFollowsAccount,
+                AccountFollowsTag,
                 Playlists,
                 PlaylistContainsVideo,
                 Videos,
