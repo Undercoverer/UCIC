@@ -28,7 +28,7 @@ fun Route.createAccountRoutes() = route("/account") {
         post {
             val account = call.receive<RegisterAccount>()
             val accountWithToken = accountDao.createAccount(account.username, account.email, account.password)
-            call.respond(accountWithToken ?: throw Exception("Account creation failed"))
+            call.respond(accountWithToken)
         }
     }
     route("/{id}") {
