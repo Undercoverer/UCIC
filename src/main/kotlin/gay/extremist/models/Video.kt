@@ -6,11 +6,12 @@ import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.javatime.CurrentDateTime
 import org.jetbrains.exposed.sql.javatime.datetime
 
 object Videos: IntIdTable() {
-    val creatorID: Column<EntityID<Int>>  = reference("creatorID", Accounts)
+    val creatorID: Column<EntityID<Int>>  = reference("creatorID", Accounts, onDelete = ReferenceOption.CASCADE)
     val title: Column<String> = varchar("title", 255)
     val videoPath: Column<String> = varchar("videoPath", 255)
     val description: Column<String> = text("description")
