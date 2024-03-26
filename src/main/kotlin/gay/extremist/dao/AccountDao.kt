@@ -5,7 +5,7 @@ import gay.extremist.models.Tag
 
 interface AccountDao {
 
-    suspend fun createAccount(username: String, email: String, password: String): Account
+    suspend fun createAccount(username: String, email: String, password: String): Account?
     suspend fun readAccount(id: Int): Account?
     suspend fun readAccountAll(): List<Account>
     suspend fun updateAccount(id: Int, username: String, email: String, password: String): Boolean

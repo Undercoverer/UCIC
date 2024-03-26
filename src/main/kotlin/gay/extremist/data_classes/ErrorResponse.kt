@@ -12,6 +12,37 @@ data class ErrorResponse(
     var data: @Contextual Any? = null,
 ) {
     companion object {
+        val accountNotCommentAuthor = ErrorResponse(
+            error = "account",
+            message = "Account not comment author",
+            status = HttpStatusCode.Forbidden.value,
+        )
+        val commentIdNotProvided = ErrorResponse(
+            error = "comment", message = "commentId not provided", status = HttpStatusCode.BadRequest.value
+        )
+        val commentNotFound = ErrorResponse(
+            error = "comment", message = "Comment not found", status = HttpStatusCode.NotFound.value
+        )
+        val commentNonNumericId = ErrorResponse(
+            error = "comment",
+            message = "commentId must be an integer",
+            status = HttpStatusCode.BadRequest.value,
+        )
+        val commentNotProvided = ErrorResponse(
+            error = "comment",
+            message = "comment not provided",
+            status = HttpStatusCode.BadRequest.value,
+        )
+        val videoNotOwnedByAccount = ErrorResponse(
+            error = "video",
+            message = "Video not owned by account",
+            status = HttpStatusCode.Forbidden.value,
+        )
+        val accountUsernameOrEmailTaken = ErrorResponse(
+            error = "account",
+            message = "Username or email already taken",
+            status = HttpStatusCode.Conflict.value,
+        )
         val videoUploadFailed = ErrorResponse(
             error = "video", message = "Video upload failed", status = HttpStatusCode.InternalServerError.value
         )
@@ -24,7 +55,7 @@ data class ErrorResponse(
         val videoIdNotProvided = ErrorResponse(
             error = "videoId", message = "videoId not provided", status = HttpStatusCode.BadRequest.value
         )
-        val tokenInvalid = ErrorResponse(
+        val accountTokenInvalid = ErrorResponse(
             error = "account", message = "Incorrect token", status = HttpStatusCode.Unauthorized.value
         )
         val accountTokenNotProvided = ErrorResponse(

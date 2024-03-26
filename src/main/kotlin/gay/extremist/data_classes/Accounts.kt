@@ -12,4 +12,7 @@ data class RegisteredAccount(val accountId: Int, val token: String)
 data class LoginAccount(val username: String, val password: String)
 
 @Serializable
-data class UnprivilegedAccount(val accountID: Int, val username: String, val email: String)
+data class UnprivilegedAccessAccount(val accountID: Int, val username: String, val email: String)
+
+@Serializable
+data class PrivilegedAccessAccount(val accountID: Int, val username: String, val email: String, val password: String, val token: String)
