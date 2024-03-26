@@ -3,6 +3,7 @@ package gay.extremist.dao
 import gay.extremist.dao.DatabaseFactory.dbQuery
 import gay.extremist.models.*
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.exposed.sql.SizedCollection
 import java.util.*
 
 
@@ -58,6 +59,54 @@ class AccountDaoImpl : AccountDao {
             .first()
             .id
             .value
+    }
+
+    override suspend fun addFollowedAccount(id: Int, account: Account): Boolean = dbQuery {
+        val follower = Account.findById(id)
+        val followedAccounts = follower?.followedAccounts
+
+        try {
+            follower?.followedAccounts = SizedCollection(followedAccounts!! + account)
+            true
+        } catch (e: NullPointerException) {
+            false
+        }
+    }
+
+    override suspend fun removeFollowedAccount(id: Int, account: Account): Boolean = dbQuery {
+        val follower = Account.findById(id)
+        val followedAccounts = follower?.followedAccounts
+
+        try {
+            follower?.followedAccounts = SizedCollection(followedAccounts!! - account)
+            true
+        } catch (e: NullPointerException) {
+            false
+        }
+    }
+
+    override suspend fun addFollowedTag(id: Int, tag: Tag): Boolean = dbQuery {
+        val follower = Account.findById(id)
+        val followedAccounts = follower?.followedTags
+
+        try {
+            follower?.followedTags = SizedCollection(followedAccounts!! + tag)
+            true
+        } catch (e: NullPointerException) {
+            false
+        }
+    }
+
+    override suspend fun removeFollowedTag(id: Int, tag: Tag): Boolean = dbQuery {
+        val follower = Account.findById(id)
+        val followedAccounts = follower?.followedTags
+
+        try {
+            follower?.followedTags = SizedCollection(followedAccounts!! - tag)
+            true
+        } catch (e: NullPointerException) {
+            false
+        }
     }
 
 }

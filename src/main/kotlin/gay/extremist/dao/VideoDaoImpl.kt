@@ -55,6 +55,30 @@ class VideoDaoImpl : VideoDao {
             false
         }
     }
+
+    override suspend fun addTagsToVideo(id: Int, tags: List<Tag>): Boolean = dbQuery {
+        val video = Video.findById(id)
+        val tagList = video?.tags
+
+        try {
+            video?.tags = SizedCollection(tagList!! + tags)
+            true
+        } catch (e: NullPointerException) {
+            false
+        }
+    }
+
+    override suspend fun removeTagsFromVideo(id: Int, tags: List<Tag>): Boolean = dbQuery {
+        val video = Video.findById(id)
+        val tagList = video?.tags
+
+        try {
+            video?.tags = SizedCollection(tagList!! - tags.toSet())
+            true
+        } catch (e: NullPointerException) {
+            false
+        }
+    }
 }
 
 val videoDao: VideoDao = VideoDaoImpl()

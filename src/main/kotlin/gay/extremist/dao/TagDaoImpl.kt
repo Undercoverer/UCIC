@@ -1,10 +1,8 @@
 package gay.extremist.dao
 
 import gay.extremist.dao.DatabaseFactory.dbQuery
-import gay.extremist.models.Tag
-import gay.extremist.models.Tags.tag
+import gay.extremist.models.*
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.exposed.sql.Op
 
 class TagDaoImpl : TagDao {
     override suspend fun readTagAll(): List<Tag> = dbQuery {
@@ -41,11 +39,11 @@ class TagDaoImpl : TagDao {
         }
     }
 
-    override suspend fun findTagByName(it: String): Tag? {
-        return dbQuery {
-            Tag.find { tag.eq(it) }.firstOrNull()
-        }
+    override suspend fun findTagByName(name: String): Tag? = dbQuery {
+        Tag.find { Tags.tag eq name }
+            .firstOrNull()
     }
+
 }
 
 val tagDao: TagDao = TagDaoImpl().apply {
