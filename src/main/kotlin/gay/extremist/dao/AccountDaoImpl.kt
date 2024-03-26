@@ -26,38 +26,39 @@ class AccountDaoImpl : AccountDao {
     }
 
     override suspend fun updateAccount(id: Int, username: String, email: String, password: String): Boolean = dbQuery {
-        val account = Account.findById(id)
-        account?.username = username
-        account?.email = email
-        account?.password = password
-
-        account != null
+        return@dbQuery when (val account = Account.findById(id)) {
+            null -> false
+            else -> {
+                account.username = username
+                account.email = email
+                account.password = password
+                true
+            }
+        }
     }
 
     override suspend fun deleteAccount(id: Int): Boolean = dbQuery {
-        val account = Account.findById(id)
-        try {
-            account!!.delete()
-            true
-        } catch (e: NullPointerException) {
-            false
+        return@dbQuery when (val account = Account.findById(id)) {
+            null -> false
+            else -> {
+                account.delete()
+                true
+            }
         }
     }
 
-    override suspend fun getToken(email: String, password: String): String = dbQuery {
+    override suspend fun getToken(email: String, password: String): String? = dbQuery {
         Account.find {
             Accounts.email eq email
             Accounts.password eq password
-        }
-            .first()
-            .token
+        }.firstOrNull()?.token
     }
 
-    override suspend fun getIdByUsername(username: String): Int = dbQuery {
+    override suspend fun getIdByUsername(username: String): Int? = dbQuery {
         Account.find { Accounts.username eq username }
-            .first()
-            .id
-            .value
+            .firstOrNull()
+            ?.id
+            ?.value
     }
 
 }
