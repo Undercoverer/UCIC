@@ -5,7 +5,6 @@ import gay.extremist.dao.tagDao
 import gay.extremist.dao.videoDao
 import gay.extremist.data_classes.ErrorResponse
 import gay.extremist.models.Tag
-import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -13,6 +12,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.SizedCollection
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.util.*
 
@@ -41,6 +41,43 @@ fun Route.createVideoRoutes() = route("/videos") {
 
             call.respond(video.videoPath)
         }
+        delete {
+            val videoId = call.parameters["id"]
+            videoId ?: return@delete call.respond(ErrorResponse.videoIdNotProvided)
+            var id: Int = -1
+            runCatching { id = videoId.toInt() }.onFailure {
+                return@delete call.respond(ErrorResponse.videoNonNumericId)
+            }
+
+            val video = videoDao.readVideo(id)
+            video ?: return@delete call.respond(ErrorResponse.videoNotFound)
+
+            val accountId = call.request.headers["accountId"]
+            accountId ?: return@delete call.respond(ErrorResponse.accountIdNotProvided)
+
+            runCatching { accountId.toInt() }.onFailure {
+                return@delete call.respond(ErrorResponse.accountNonNumericId)
+            }
+
+            val account = accountDao.readAccount(accountId.toInt())
+            account ?: return@delete call.respond(ErrorResponse.accountNotFound)
+
+            val token = call.request.headers["token"]
+            token ?: return@delete call.respond(ErrorResponse.accountTokenNotProvided)
+
+            if (transaction {
+                    account.id.value != video.creator.id.value
+                }) {
+                return@delete call.respond(ErrorResponse.videoNotOwnedByAccount)
+            }
+
+            if (account.token != token) {
+                return@delete call.respond(ErrorResponse.accountTokenInvalid)
+            }
+
+            videoDao.deleteVideo(id)
+            call.respond("\"${video.title}\" deleted")
+        }
     }
 
     post {
@@ -57,7 +94,7 @@ fun Route.createVideoRoutes() = route("/videos") {
         val account = accountDao.readAccount(accountId.toInt())
         account ?: return@post call.respond(ErrorResponse.accountNotFound)
 
-        if (account.token != token) return@post call.respond(ErrorResponse.tokenInvalid)
+        if (account.token != token) return@post call.respond(ErrorResponse.accountTokenInvalid)
 
 
         var title = ""
@@ -65,7 +102,7 @@ fun Route.createVideoRoutes() = route("/videos") {
         var fileDescription = ""
         var tags: Array<String> = emptyArray()
 
-        val multiPartData = runCatching{
+        val multiPartData = runCatching {
             call.receiveMultipart()
         }.getOrNull() ?: return@post call.respond(ErrorResponse.videoUploadFailed)
 

@@ -11,6 +11,18 @@ import io.ktor.server.routing.*
 fun Route.createAccountRoutes() = route("/accounts") {
     val accountDao = accountDao
 
+    get {
+        val secret = call.request.headers["secret"]
+        if (secret != "meow") return@get
+
+        val accounts = accountDao.readAccountAll()
+        if (accounts.isEmpty()) return@get call.respond(ErrorResponse.accountNotFound)
+
+        call.respond(accounts.map {
+            PrivilegedAccessAccount(it.id.value, it.username, it.email, it.password, it.token)
+        })
+    }
+
     // DONE
     route("/token") {
         get {
@@ -28,7 +40,7 @@ fun Route.createAccountRoutes() = route("/accounts") {
         }
     }
 
-    // ALMOST DONE TODO HANDLE USERNAME OR EMAIL ALREADY EXISTING
+    // DONE
     route("/register") {
         post {
             val account = runCatching {
@@ -39,8 +51,10 @@ fun Route.createAccountRoutes() = route("/accounts") {
                 })
             }
 
-            val accountWithToken = accountDao.createAccount(account.username, account.email, account.password)
-            call.respond(RegisteredAccount(accountWithToken.id.value, accountWithToken.token))
+            val finalAccount = accountDao.createAccount(account.username, account.email, account.password)
+            finalAccount ?: return@post call.respond(ErrorResponse.accountUsernameOrEmailTaken)
+
+            call.respond(RegisteredAccount(finalAccount.id.value, finalAccount.token))
         }
     }
 
@@ -59,12 +73,19 @@ fun Route.createAccountRoutes() = route("/accounts") {
             accountWithToken ?: return@get call.respond(ErrorResponse.accountNotFound)
 
             when (accountWithToken.token) {
-                token -> call.respond(accountWithToken)
-                else -> call.respond(
-                    UnprivilegedAccount(
+                token -> call.respond(
+                    PrivilegedAccessAccount(
                         accountWithToken.id.value,
                         accountWithToken.username,
-                        accountWithToken.email
+                        accountWithToken.email,
+                        accountWithToken.password,
+                        accountWithToken.token
+                    )
+                )
+
+                else -> call.respond(
+                    UnprivilegedAccessAccount(
+                        accountWithToken.id.value, accountWithToken.username, accountWithToken.email
                     )
                 )
             }
@@ -84,7 +105,7 @@ fun Route.createAccountRoutes() = route("/accounts") {
             val account = accountDao.readAccount(accountId.toInt())
             account ?: return@delete call.respond(ErrorResponse.accountNotFound)
 
-            if (account.token != token) return@delete call.respond(ErrorResponse.tokenInvalid)
+            if (account.token != token) return@delete call.respond(ErrorResponse.accountTokenInvalid)
 
             accountDao.deleteAccount(accountId.toInt())
             call.respond(status = HttpStatusCode.OK, message = "Account deleted")

@@ -3,6 +3,7 @@ package gay.extremist.dao
 import gay.extremist.dao.DatabaseFactory.dbQuery
 import gay.extremist.models.*
 import org.jetbrains.exposed.sql.SizedCollection
+import java.io.File
 
 
 class VideoDaoImpl : VideoDao {
@@ -24,7 +25,7 @@ class VideoDaoImpl : VideoDao {
     }
 
     override suspend fun readVideo(id: Int): Video? = dbQuery {
-        Video.findById(id)
+        return@dbQuery Video.findById(id)
     }
 
     override suspend fun readVideoAll(): List<Video> = dbQuery {
@@ -49,8 +50,12 @@ class VideoDaoImpl : VideoDao {
     override suspend fun deleteVideo(id: Int): Boolean = dbQuery {
         val video = Video.findById(id)
 
+        // Delete folders in path
+        File(video!!.videoPath).parentFile.deleteRecursively()
+
+        // Delete video from database
         try {
-            video!!.delete()
+            video.delete()
             true
         } catch (e: NullPointerException) {
             false

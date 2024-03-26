@@ -3,10 +3,14 @@ package gay.extremist.dao
 import gay.extremist.dao.DatabaseFactory.dbQuery
 import gay.extremist.models.Account
 import gay.extremist.models.Comment
+import gay.extremist.models.Comments
 import gay.extremist.models.Video
+import org.jetbrains.exposed.sql.and
 
 class CommentDaoImpl : CommentDao {
-    override suspend fun createComment( account: Account, video: Video, parentComment: Comment?, comment: String ): Comment = dbQuery {
+    override suspend fun createComment(
+        account: Account, video: Video, parentComment: Comment?, comment: String
+    ): Comment = dbQuery {
         Comment.new {
             this.account = account
             this.video = video
@@ -24,21 +28,29 @@ class CommentDaoImpl : CommentDao {
     }
 
     override suspend fun updateComment(id: Int, comment: String): Boolean = dbQuery {
-        val oldComment = Comment.findById(id)
-        oldComment?.comment = comment
+        val oldComment = Comment.findById(id) ?: return@dbQuery false
 
-        oldComment != null
+        oldComment.comment = comment
+        return@dbQuery true
     }
 
     override suspend fun deleteComment(id: Int): Boolean = dbQuery {
-        val comment = Comment.findById(id)
+        val comment = Comment.findById(id) ?: return@dbQuery false
 
-        try {
-            comment!!.delete()
-            true
-        } catch (e: NullPointerException) {
-            false
-        }
+        comment.delete()
+        return@dbQuery true
+    }
+
+    override suspend fun getCommentsOnVideo(videoId: Int): List<Comment> = dbQuery {
+        return@dbQuery Comment.find { (Comments.videoID eq videoId) and (Comments.parentID eq null) }.toList()
+    }
+
+    override suspend fun getCommentsOnComment(commentId: Int): List<Comment> = dbQuery {
+        return@dbQuery Comment.find { Comments.parentID eq commentId }.toList()
+    }
+
+    override suspend fun getCommentsOnAccount(accountId: Int): List<Comment> = dbQuery {
+        return@dbQuery Comment.find { Comments.accountID eq accountId }.toList()
     }
 }
 
