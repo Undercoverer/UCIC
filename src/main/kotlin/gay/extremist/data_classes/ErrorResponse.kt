@@ -12,6 +12,43 @@ data class ErrorResponse(
     var data: @Contextual Any? = null,
 ) {
     companion object {
+        fun headersNotProvided(missing: List<String>): ErrorResponse {
+            return ErrorResponse(
+                error = "headers",
+                message = "Headers not provided: $missing",
+                status = HttpStatusCode.BadRequest.value,
+            )
+        }
+
+        fun conversionError(value: String, type: String, error: String): Any {
+            return ErrorResponse(
+                error = "conversion",
+                message = "Could not convert \"$value\" to $type: $error",
+                status = HttpStatusCode.BadRequest.value,
+            )
+        }
+
+        fun notProvided(s: String): Any {
+            return ErrorResponse(
+                error = s,
+                message = "${s} not provided",
+                status = HttpStatusCode.BadRequest.value,
+            )
+        }
+
+        fun notFound(s: String): Any {
+            return ErrorResponse(
+                error = s.lowercase(),
+                message = "$s not found",
+                status = HttpStatusCode.NotFound.value,
+            )
+        }
+
+        val commentSchema = ErrorResponse(
+            error = "comment",
+            message = "Comment schema is invalid",
+            status = HttpStatusCode.BadRequest.value
+        )
         val accountNotCommentAuthor = ErrorResponse(
             error = "account",
             message = "Account not comment author",
@@ -71,7 +108,7 @@ data class ErrorResponse(
         )
         val accountSchema = ErrorResponse(
             error = "account",
-            message = "Data does not match schema",
+            message = "Account schema is invalid",
             status = HttpStatusCode.BadRequest.value,
         )
         val accountNotFound = ErrorResponse(
@@ -84,5 +121,3 @@ data class ErrorResponse(
         )
     }
 }
-
-
