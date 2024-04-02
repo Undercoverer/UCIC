@@ -4,6 +4,7 @@ import gay.extremist.dao.AccountDao
 import gay.extremist.dao.AccountDaoImpl
 import gay.extremist.dao.DatabaseFactory
 import gay.extremist.plugins.*
+import gay.extremist.plugins.routes.staticRoutes
 import io.ktor.server.application.*
 
 fun main(args: Array<String>) {
@@ -16,5 +17,5 @@ fun Application.module() {
     configureHTTP()
     configureSerialization()
     configureRouting()
-
+    staticRoutes()
 }

@@ -44,6 +44,46 @@ data class ErrorResponse(
             )
         }
 
+        val videoDeleteFailed = ErrorResponse(
+            error = "video",
+            message = "Video delete failed",
+            status = HttpStatusCode.InternalServerError.value,
+        )
+        val videoNotProcessed = ErrorResponse(
+            error = "video",
+            message = "Video not finished processing",
+            status = HttpStatusCode.NotFound.value
+        )
+        val videoDescriptionTooLong = ErrorResponse(
+            error = "video",
+            message = "Video description cannot exceed 4000 characters",
+            status = HttpStatusCode.BadRequest.value
+        )
+        val videoTitleTooLong = ErrorResponse(
+            error = "video",
+            message = "Video title cannot exceed 255 characters",
+            status = HttpStatusCode.BadRequest.value
+        )
+        val videoTagsTooMany = ErrorResponse(
+            error = "video",
+            message = "Video tag count cannot exceed 16 tags",
+            status = HttpStatusCode.BadRequest.value,
+        )
+        val videoTagsEmpty = ErrorResponse(
+            error = "video",
+            message = "Video tags cannot be empty",
+            status = HttpStatusCode.BadRequest.value
+        )
+        val videoDescriptionEmpty = ErrorResponse(
+            error = "video",
+            message = "Video description cannot be empty",
+            status = HttpStatusCode.BadRequest.value
+        )
+        val videoTitleEmpty = ErrorResponse(
+            error = "video",
+            message = "Video title cannot be empty",
+            status = HttpStatusCode.BadRequest.value
+        )
         val commentSchema = ErrorResponse(
             error = "comment",
             message = "Comment schema is invalid",

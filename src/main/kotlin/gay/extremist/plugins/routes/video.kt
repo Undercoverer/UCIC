@@ -1,153 +1,173 @@
 package gay.extremist.plugins.routes
 
+import gay.extremist.BASE_VIDEO_STORAGE_PATH
+import gay.extremist.TMP_VIDEO_STORAGE
+import gay.extremist.dao.DatabaseFactory.dbQuery
 import gay.extremist.dao.accountDao
 import gay.extremist.dao.tagDao
 import gay.extremist.dao.videoDao
 import gay.extremist.data_classes.ErrorResponse
+import gay.extremist.data_classes.VideoResponse
 import gay.extremist.models.Tag
+import gay.extremist.util.*
+import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*
+import io.ktor.server.http.content.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.util.pipeline.*
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.SizedCollection
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
-import java.util.*
-
-val BASE_STORAGE_PATH = System.getenv("STORAGE_PATH") ?: "/var/storage"
 
 fun Route.createVideoRoutes() = route("/videos") {
-    val videoDao = videoDao
     route("/{id}") {
-        get {
-            val videoId = call.parameters["id"]
-            videoId ?: return@get call.respond(ErrorResponse.videoIdNotProvided)
-
-            runCatching { videoId.toInt() }.onFailure {
-                return@get call.respond(ErrorResponse.videoNonNumericId)
-            }
-
-            val video = videoDao.readVideo(videoId.toInt())
-            video ?: return@get call.respond(ErrorResponse.videoNotFound)
-
-            // TODO WORK ON FFMPEG PROCESSING AND FINAL FILE LOCATIONS
-//            // Respond with link to manifest.mpd file
-//            val manifestPath = "${
-//                video?.videoPath ?: call.respondText("Video not found", status = HttpStatusCode.NotFound)
-//            }/manifest.mpd"
-//            call.respondText(manifestPath)
-
-            call.respond(video.videoPath)
-        }
-        delete {
-            val videoId = call.parameters["id"]
-            videoId ?: return@delete call.respond(ErrorResponse.videoIdNotProvided)
-            var id: Int = -1
-            runCatching { id = videoId.toInt() }.onFailure {
-                return@delete call.respond(ErrorResponse.videoNonNumericId)
-            }
-
-            val video = videoDao.readVideo(id)
-            video ?: return@delete call.respond(ErrorResponse.videoNotFound)
-
-            val accountId = call.request.headers["accountId"]
-            accountId ?: return@delete call.respond(ErrorResponse.accountIdNotProvided)
-
-            runCatching { accountId.toInt() }.onFailure {
-                return@delete call.respond(ErrorResponse.accountNonNumericId)
-            }
-
-            val account = accountDao.readAccount(accountId.toInt())
-            account ?: return@delete call.respond(ErrorResponse.accountNotFound)
-
-            val token = call.request.headers["token"]
-            token ?: return@delete call.respond(ErrorResponse.accountTokenNotProvided)
-
-            if (transaction {
-                    account.id.value != video.creator.id.value
-                }) {
-                return@delete call.respond(ErrorResponse.videoNotOwnedByAccount)
-            }
-
-            if (account.token != token) {
-                return@delete call.respond(ErrorResponse.accountTokenInvalid)
-            }
-
-            videoDao.deleteVideo(id)
-            call.respond("\"${video.title}\" deleted")
-        }
+        get { handleGetVideo() }
+        delete { handleDeleteVideo() } //        TODO UPDATE VIDEO ENDPOINT
+        post { handleUpdateVideo() }
     }
 
-    post {
-        val accountId = call.request.headers["accountId"]
-        accountId ?: return@post call.respond(ErrorResponse.accountIdNotProvided)
+    post { handleUploadVideo() }
+}
 
-        runCatching { accountId.toInt() }.onFailure {
-            return@post call.respond(ErrorResponse.accountNonNumericId)
-        }
+suspend fun PipelineContext<Unit, ApplicationCall>.handleUpdateVideo() {
+    val headers = requiredHeaders(headerAccountId, headerToken) ?: return
+    val accountId = idParameter() ?: return
 
-        val token = call.request.headers["token"]
-        token ?: return@post call.respond(ErrorResponse.accountTokenNotProvided)
+    val token = headers[headerToken]
+    val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
 
-        val account = accountDao.readAccount(accountId.toInt())
-        account ?: return@post call.respond(ErrorResponse.accountNotFound)
+    if (account.token != token) return call.respond(ErrorResponse.accountTokenInvalid)
 
-        if (account.token != token) return@post call.respond(ErrorResponse.accountTokenInvalid)
+    // TODO IMPLEMENT
+    // Recieve some json with the video details.
+}
 
+suspend fun PipelineContext<Unit, ApplicationCall>.handleUploadVideo() {
+    val headers = requiredHeaders(headerAccountId, headerToken) ?: return
+    val accountId = idParameter() ?: return
 
-        var title = ""
-        var fileName = ""
-        var fileDescription = ""
-        var tags: Array<String> = emptyArray()
+    val token = headers[headerToken]
+    val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
 
-        val multiPartData = runCatching {
-            call.receiveMultipart()
-        }.getOrNull() ?: return@post call.respond(ErrorResponse.videoUploadFailed)
+    if (account.token != token) return call.respond(ErrorResponse.accountTokenInvalid)
 
-        val timestamp = System.currentTimeMillis()
-        multiPartData.forEachPart { part ->
-            when (part) {
-                is PartData.FormItem -> {
-                    when (part.name) {
-                        "title" -> title = part.value
-                        "description" -> fileDescription = part.value
-                        "tags" -> tags = Json.decodeFromString<Array<String>>(part.value)
-                        else -> {}
-                    }
-                }
+    val multiPartData = runCatching {
+        call.receiveMultipart()
+    }.getOrNull() ?: return call.respond(ErrorResponse.videoUploadFailed)
 
-                is PartData.FileItem -> {
-                    fileName = part.originalFileName ?: ""
-                    val file = File("$BASE_STORAGE_PATH/videos/${account.id}/$timestamp/$fileName")
-                    file.parentFile.mkdirs()
-                    file.appendBytes(part.streamProvider().readBytes())
-                }
+    var title = ""
+    val fileName = ""
+    var videoDescription = ""
+    var tags: Array<String> = emptyArray()
 
+    val timestamp = System.currentTimeMillis()
+    multiPartData.forEachPart {
+        when (it) {
+            is PartData.FormItem -> when (it.name) {
+                "title" -> title = it.value
+                "description" -> videoDescription = it.value
+                "tags" -> tags = Json.decodeFromString<Array<String>>(it.value)
                 else -> {}
             }
-            part.dispose()
-        }
 
-
-        // Convert String tags to Tag objects
-        val tagObjects: SizedCollection<Tag> = when {
-            tags.isEmpty() -> {
-                SizedCollection(delegate = Collections.emptyList())
+            is PartData.FileItem -> {
+                val originalFileName = it.originalFileName ?: "upload.mp4"
+                File("$BASE_VIDEO_STORAGE_PATH/${account.id}/$timestamp/$originalFileName").apply {
+                    mkdirs()
+                    appendBytes(it.streamProvider().readBytes())
+                }
             }
 
-            else -> {
-                SizedCollection(delegate = tags.map {
-                    tagDao.findTagByName(it)
-                }.filterNotNull())
-            }
+            else -> {}
         }
-
-        val video = videoDao.createVideo(
-            account, "$BASE_STORAGE_PATH/videos/${account.id}/$timestamp/$fileName", title, fileDescription, tagObjects,
-        )
-
-        call.respond(video.id.value)
+        it.dispose()
     }
+
+    when {
+        title.isEmpty() -> return call.respond(ErrorResponse.videoTitleEmpty)
+        title.length > 255 -> return call.respond(ErrorResponse.videoTitleTooLong)
+        videoDescription.isEmpty() -> return call.respond(ErrorResponse.videoDescriptionEmpty)
+        videoDescription.length > 4000 -> return call.respond(ErrorResponse.videoDescriptionTooLong)
+        tags.isEmpty() -> return call.respond(ErrorResponse.videoTagsEmpty)
+        tags.size > 16 -> return call.respond(ErrorResponse.videoTagsTooMany)
+    }
+
+    val tagObjects: SizedCollection<Tag> =
+        SizedCollection(tags.map { tagDao.findTagByName(it) ?: tagDao.createTag(it) })
+
+    val video = videoDao.createVideo(
+        account,
+        "$TMP_VIDEO_STORAGE/${account.id}/$timestamp/$fileName",
+        title,
+        videoDescription,
+        tagObjects,
+    )
+
+    call.respond(video.id.value)
+
+    val newOutputDir = File("$BASE_VIDEO_STORAGE_PATH/${video.id.value}").apply(File::mkdirs)
+
+    // May take some time (much)
+    VideoConverter.convert(video.videoPath, newOutputDir.canonicalPath)
+
+    File("$TMP_VIDEO_STORAGE/${account.id}/$timestamp/").deleteRecursively()
+
+    videoDao.updateVideoPath(video.id.value, "/static/videos/${video.id.value}")
+}
+
+suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteVideo() {
+    val headers = requiredHeaders(headerAccountId, headerToken) ?: return
+
+    val videoId = idParameter() ?: return
+    val video = videoDao.readVideo(videoId) ?: return call.respond(ErrorResponse.videoNotFound)
+
+    val accountId = convert(headers[headerAccountId], String::toInt) ?: return
+    val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.accountNotFound)
+
+    val token = headers[headerToken] ?: return
+
+    when {
+        transaction { account.id.value != video.creator.id.value } -> {
+            return call.respond(ErrorResponse.videoNotOwnedByAccount)
+        }
+
+        (account.token != token) -> return call.respond(ErrorResponse.accountTokenInvalid)
+
+        else -> {
+            if (File("$BASE_VIDEO_STORAGE_PATH/${video.id.value}").deleteRecursively()) return call.respond(
+                ErrorResponse.videoDeleteFailed
+            )
+
+            videoDao.deleteVideo(videoId)
+
+            call.respond(HttpStatusCode.OK)
+        }
+    }
+}
+
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetVideo() {
+    val videoId = idParameter() ?: return
+    val video = videoDao.readVideo(videoId) ?: return call.respond(ErrorResponse.notFound("Video"))
+    if (video.videoPath.contains("tmp")) return call.respond(ErrorResponse.videoNotProcessed)
+
+    call.respond(
+        VideoResponse(
+            video.id.value,
+            video.title,
+            video.description,
+            video.videoPath,
+            dbQuery { video.tags.map { it.tag } },
+            video.creator.id.value,
+            video.uploadDate.toString()
+        )
+    )
+}
+
+
+fun Application.staticRoutes() = routing {
+    staticFiles("/static/videos", File(BASE_VIDEO_STORAGE_PATH))
 }

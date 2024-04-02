@@ -16,7 +16,7 @@ fun Route.createAccountRoutes() = route("/accounts") {
 
     route("/register") { post { handleAccountRegistration() } }
 
-    route("/{id}") {3
+    route("/{id}") {
         get { handleGetAccount() }
         delete { handleDeleteAccount() }
 
@@ -39,7 +39,6 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteAccount()
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetAccount() {
-
     val headers = requiredHeaders(headerAccountId) ?: return
     val optHeaders = optionalHeaders(headerToken)
     val accountId = convert(headers[headerAccountId], String::toInt) ?: return
@@ -47,25 +46,18 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetAccount() {
     val token = optHeaders[headerToken]
     val accountWithToken = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.accountNotFound)
 
-    when (accountWithToken.token) {
-        token -> call.respond(
-            PrivilegedAccessAccount(
-                accountWithToken.id.value,
-                accountWithToken.username,
-                accountWithToken.email,
-                accountWithToken.password,
-                accountWithToken.token
-            )
+    call.respond(
+        if (accountWithToken.token == token) PrivilegedAccessAccount(
+            accountWithToken.id.value,
+            accountWithToken.username,
+            accountWithToken.email,
+            accountWithToken.password,
+            accountWithToken.token
+        ) else UnprivilegedAccessAccount(
+            accountWithToken.id.value, accountWithToken.username, accountWithToken.email
         )
-
-        else -> call.respond(
-            UnprivilegedAccessAccount(
-                accountWithToken.id.value, accountWithToken.username, accountWithToken.email
-            )
-        )
-    }
+    )
 }
-
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleAccountRegistration() {
     val account = call.receiveCatching<RegisterAccount>().onFailureOrNull {
@@ -89,8 +81,6 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetToken() {
     call.respond(token)
 }
 
-
-// DONE
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetAllAccounts() {
     val headers = requiredHeaders("secret")
     if (headers?.get("secret") != "meow") return
