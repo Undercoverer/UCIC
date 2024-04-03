@@ -4,5 +4,8 @@ import gay.extremist.dao.tagDao
 import io.ktor.server.routing.*
 
 fun Route.createTagRoutes() = route("/tags") {
-    val tagDao = tagDao
+//    tagDao.createTag()
+//    tagDao.findTagsBySubstring()
+//    tagDao.getPresetTags()
+//    tagDao.getVideosForTag()
 }

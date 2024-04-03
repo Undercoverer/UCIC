@@ -1,6 +1,7 @@
 package gay.extremist.dao
 
 import gay.extremist.models.Account
+import gay.extremist.models.Comment
 import gay.extremist.models.Tag
 import gay.extremist.models.Video
 import org.jetbrains.exposed.sql.SizedCollection
@@ -20,4 +21,6 @@ interface VideoDao {
     suspend fun deleteVideo(id: Int): Boolean
     suspend fun addTagsToVideo(id: Int, tags: List<Tag>): Boolean
     suspend fun removeTagsFromVideo(id: Int, tags: List<Tag>): Boolean
+
+    suspend fun getCommentsOnVideo(id: Int): List<Comment>
 }

@@ -10,8 +10,7 @@ interface CommentDao {
     suspend fun readCommentAll(): List<Comment>
     suspend fun updateComment(id: Int, comment: String): Boolean
     suspend fun deleteComment(id: Int): Boolean
-    suspend fun getCommentsOnVideo(videoId: Int): List<Comment>
+    suspend fun getToplevelCommentsOnVideo(videoId: Int): List<Comment>
     suspend fun getCommentsOnComment(commentId: Int): List<Comment>
-    suspend fun getCommentsOnAccount(accountId: Int): List<Comment>
     companion object : CommentDao by CommentDaoImpl()
 }

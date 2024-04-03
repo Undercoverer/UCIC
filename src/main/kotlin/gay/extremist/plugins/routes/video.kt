@@ -32,6 +32,10 @@ fun Route.createVideoRoutes() = route("/videos") {
     }
 
     post { handleUploadVideo() }
+
+//    videoDao.addTagsToVideo()
+//    videoDao.removeTagsFromVideo()
+//    videoDao.getCommentsOnVideo()
 }
 
 suspend fun PipelineContext<Unit, ApplicationCall>.handleUpdateVideo() {
@@ -136,16 +140,16 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteVideo() {
     val headers = requiredHeaders(headerAccountId, headerToken) ?: return
 
     val videoId = idParameter() ?: return
-    val video = videoDao.readVideo(videoId) ?: return call.respond(ErrorResponse.videoNotFound)
+    val video = videoDao.readVideo(videoId) ?: return call.respond(ErrorResponse.notFound("Video"))
 
     val accountId = convert(headers[headerAccountId], String::toInt) ?: return
-    val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.accountNotFound)
+    val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
 
     val token = headers[headerToken] ?: return
 
     when {
         transaction { account.id.value != video.creator.id.value } -> {
-            return call.respond(ErrorResponse.videoNotOwnedByAccount)
+            return call.respond(ErrorResponse.notOwnedByAccount("Video"))
         }
 
         (account.token != token) -> return call.respond(ErrorResponse.accountTokenInvalid)

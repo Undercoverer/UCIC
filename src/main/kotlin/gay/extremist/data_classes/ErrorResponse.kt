@@ -36,7 +36,7 @@ data class ErrorResponse(
             )
         }
 
-        fun notFound(s: String): Any {
+        fun notFound(s: String): ErrorResponse {
             return ErrorResponse(
                 error = s.lowercase(),
                 message = "$s not found",
@@ -44,6 +44,24 @@ data class ErrorResponse(
             )
         }
 
+        fun notOwnedByAccount(s: String): ErrorResponse {
+            return ErrorResponse(
+                error = s.lowercase(),
+                message = "$s not owned by account",
+                status = HttpStatusCode.Forbidden.value,
+            )
+        }
+
+        val notInPlaylist = ErrorResponse(
+            error = "playlist",
+            message = "Video not in playlist",
+            status = HttpStatusCode.NotFound.value,
+        )
+        val alreadyInPlaylist = ErrorResponse(
+            error = "playlist",
+            message = "Video already in playlist",
+            status = HttpStatusCode.Conflict.value,
+        )
         val videoConvertFailed = ErrorResponse(
             error = "video",
             message = "Video conversion failed",
@@ -51,13 +69,11 @@ data class ErrorResponse(
         )
         val videoDeleteFailed = ErrorResponse(
             error = "video",
-            message = "Video delete failed",
+            message = "Video deletion failed",
             status = HttpStatusCode.InternalServerError.value,
         )
         val videoNotProcessed = ErrorResponse(
-            error = "video",
-            message = "Video not finished processing",
-            status = HttpStatusCode.NotFound.value
+            error = "video", message = "Video not finished processing", status = HttpStatusCode.NotFound.value
         )
         val videoDescriptionTooLong = ErrorResponse(
             error = "video",
@@ -75,50 +91,16 @@ data class ErrorResponse(
             status = HttpStatusCode.BadRequest.value,
         )
         val videoTagsEmpty = ErrorResponse(
-            error = "video",
-            message = "Video tags cannot be empty",
-            status = HttpStatusCode.BadRequest.value
+            error = "video", message = "Video tags cannot be empty", status = HttpStatusCode.BadRequest.value
         )
         val videoDescriptionEmpty = ErrorResponse(
-            error = "video",
-            message = "Video description cannot be empty",
-            status = HttpStatusCode.BadRequest.value
+            error = "video", message = "Video description cannot be empty", status = HttpStatusCode.BadRequest.value
         )
         val videoTitleEmpty = ErrorResponse(
-            error = "video",
-            message = "Video title cannot be empty",
-            status = HttpStatusCode.BadRequest.value
+            error = "video", message = "Video title cannot be empty", status = HttpStatusCode.BadRequest.value
         )
-        val commentSchema = ErrorResponse(
-            error = "comment",
-            message = "Comment schema is invalid",
-            status = HttpStatusCode.BadRequest.value
-        )
-        val accountNotCommentAuthor = ErrorResponse(
-            error = "account",
-            message = "Account not comment author",
-            status = HttpStatusCode.Forbidden.value,
-        )
-        val commentIdNotProvided = ErrorResponse(
-            error = "comment", message = "commentId not provided", status = HttpStatusCode.BadRequest.value
-        )
-        val commentNotFound = ErrorResponse(
-            error = "comment", message = "Comment not found", status = HttpStatusCode.NotFound.value
-        )
-        val commentNonNumericId = ErrorResponse(
-            error = "comment",
-            message = "commentId must be an integer",
-            status = HttpStatusCode.BadRequest.value,
-        )
-        val commentNotProvided = ErrorResponse(
-            error = "comment",
-            message = "comment not provided",
-            status = HttpStatusCode.BadRequest.value,
-        )
-        val videoNotOwnedByAccount = ErrorResponse(
-            error = "video",
-            message = "Video not owned by account",
-            status = HttpStatusCode.Forbidden.value,
+        val schema = ErrorResponse(
+            error = "data", message = "Schema is invalid", status = HttpStatusCode.BadRequest.value
         )
         val accountUsernameOrEmailTaken = ErrorResponse(
             error = "account",
@@ -128,41 +110,11 @@ data class ErrorResponse(
         val videoUploadFailed = ErrorResponse(
             error = "video", message = "Video upload failed", status = HttpStatusCode.InternalServerError.value
         )
-        val videoNotFound = ErrorResponse(
-            error = "video", message = "Video not found", status = HttpStatusCode.NotFound.value
-        )
-        val videoNonNumericId = ErrorResponse(
-            error = "videoId", message = "videoId must be an integer", status = HttpStatusCode.BadRequest.value
-        )
-        val videoIdNotProvided = ErrorResponse(
-            error = "videoId", message = "videoId not provided", status = HttpStatusCode.BadRequest.value
-        )
         val accountTokenInvalid = ErrorResponse(
             error = "account", message = "Incorrect token", status = HttpStatusCode.Unauthorized.value
         )
-        val accountTokenNotProvided = ErrorResponse(
-            error = "token",
-            message = "token not provided",
-            status = HttpStatusCode.Unauthorized.value,
-        )
-        val accountIdNotProvided = ErrorResponse(
-            error = "accountId", message = "accountId not provided", status = HttpStatusCode.BadRequest.value
-        )
         val accountIncorrectCredentials = ErrorResponse(
             error = "account", message = "Incorrect username or password", status = HttpStatusCode.Unauthorized.value
-        )
-        val accountSchema = ErrorResponse(
-            error = "account",
-            message = "Account schema is invalid",
-            status = HttpStatusCode.BadRequest.value,
-        )
-        val accountNotFound = ErrorResponse(
-            error = "account",
-            message = "Account not found",
-            status = HttpStatusCode.NotFound.value,
-        )
-        val accountNonNumericId = ErrorResponse(
-            error = "accountId", message = "accountId must be an integer", status = HttpStatusCode.BadRequest.value
         )
     }
 }

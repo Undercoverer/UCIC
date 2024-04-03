@@ -21,17 +21,41 @@ fun Route.createAccountRoutes() = route("/accounts") {
         delete { handleDeleteAccount() }
 
         post { call.respond(HttpStatusCode.NotImplemented) }
-    }
 
-    // TODO CREATE RELATION-BASED ROUTES
+        route("/videos") {
+            get { handleGetAccountVideos() }
+        }
+        route("/playlists") {
+            get { handleGetAccountPlaylists() }
+        }
+    }
 }
 
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetAccountVideos() {
+    val accountId = idParameter() ?: return
+    val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
+    val videos = accountDao.getVideosFromAccount(accountId)
+    call.respond(videos.map {
+        listOf(it.id.value.toString(), it.title, it.videoPath)
+    })
+}
+
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetAccountPlaylists() {
+    val accountId = idParameter() ?: return
+    val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
+    val playlists = accountDao.getPlaylistsFromAccount(accountId)
+    call.respond(playlists.map {
+        listOf(it.id.value.toString(), it.name)
+    })
+}
+
+
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteAccount() {
-    val optHeaders = optionalHeaders(headerToken)
+    val headers = requiredHeaders(headerToken) ?: return
     val accountId = idParameter() ?: return
 
-    val token = optHeaders[headerToken] ?: return call.respond(ErrorResponse.accountTokenNotProvided)
-    val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.accountNotFound)
+    val token = headers[headerToken] ?: return call.respond(ErrorResponse.notProvided("Token"))
+    val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
     if (account.token != token) return call.respond(ErrorResponse.accountTokenInvalid)
 
     accountDao.deleteAccount(accountId)
@@ -44,7 +68,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetAccount() {
     val accountId = convert(headers[headerAccountId], String::toInt) ?: return
 
     val token = optHeaders[headerToken]
-    val accountWithToken = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.accountNotFound)
+    val accountWithToken = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
 
     call.respond(
         if (accountWithToken.token == token) PrivilegedAccessAccount(
@@ -61,7 +85,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetAccount() {
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleAccountRegistration() {
     val account = call.receiveCatching<RegisterAccount>().onFailureOrNull {
-        call.respond(ErrorResponse.accountSchema.apply { data = it.message })
+        call.respond(ErrorResponse.schema.apply { data = it.message })
     } ?: return
 
     val finalAccount = accountDao.createAccount(account.username, account.email, account.password)
@@ -72,7 +96,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleAccountRegistra
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetToken() {
     val account = call.receiveCatching<LoginAccount>().onFailureOrNull {
-        call.respond(ErrorResponse.accountSchema.apply { data = it.message })
+        call.respond(ErrorResponse.schema.apply { data = it.message })
     } ?: return
 
     val token = accountDao.getToken(account.username, account.password)
@@ -86,7 +110,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetAllAccounts(
     if (headers?.get("secret") != "meow") return
 
     val accounts = accountDao.readAccountAll().also {
-        if (it.isEmpty()) return call.respond(ErrorResponse.accountNotFound)
+        if (it.isEmpty()) return call.respond(ErrorResponse.notFound("Account"))
     }
 
     call.respond(accounts.map {
