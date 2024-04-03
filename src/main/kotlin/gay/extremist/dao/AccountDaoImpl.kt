@@ -8,9 +8,12 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.SizedCollection
 import org.jetbrains.exposed.sql.or
 import java.util.*
+import java.security.MessageDigest
 
 
 class AccountDaoImpl : AccountDao {
+    // Used to hash passwords
+    private val sha256 = MessageDigest.getInstance("SHA-256")
 
     override suspend fun createAccount(username: String, email: String, password: String): Account? = dbQuery {
         // Ensures no duplicate usernames and no reused emails
@@ -19,7 +22,7 @@ class AccountDaoImpl : AccountDao {
             null -> Account.new {
                 this.username = username
                 this.email = email
-                this.password = password
+                this.password = sha256.digest(password.toByteArray()).toString()
                 this.token = UUID.nameUUIDFromBytes((username + password).toByteArray()).toString()
             }
             else -> null
@@ -40,7 +43,7 @@ class AccountDaoImpl : AccountDao {
             else -> {
                 account.username = username
                 account.email = email
-                account.password = password
+                account.password = sha256.digest(password.toByteArray()).toString()
                 true
             }
         }
@@ -59,7 +62,7 @@ class AccountDaoImpl : AccountDao {
     override suspend fun getToken(email: String, password: String): String? = dbQuery {
         Account.find {
             Accounts.email eq email
-            Accounts.password eq password
+            Accounts.password eq sha256.digest(password.toByteArray()).toString()
         }.firstOrNull()?.token
     }
 
