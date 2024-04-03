@@ -6,10 +6,10 @@ import java.util.concurrent.CompletableFuture
 
 class VideoConverter {
     companion object {
-        fun convert(inputFile: String, outputDir: String, newFileNames: String = "output") {
+        fun convert(inputFile: String, outputDir: String, newFileNames: String = "output"): String {
             if (!isFFmpegInstalled()) {
                 println("Error: FFmpeg is not installed")
-                return
+                return "Error"
             }
 
             val input = File(inputFile).canonicalFile.absoluteFile
@@ -21,10 +21,24 @@ class VideoConverter {
             )
 
             // Remove resolutions higher than the input video
-            val process = Runtime.getRuntime()
-                .exec("ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=s=x:p=0 $inputFile").inputStream.bufferedReader()
-                .readLine()
-            val inputHeight = process.toIntOrNull() ?: throw Exception("Invalid input file")
+            //            val process = Runtime.getRuntime().exec("ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=s=x:p=0 $input").
+            val processBuilder = ProcessBuilder(
+                "ffprobe",
+                "-v",
+                "error",
+                "-select_streams",
+                "v:0",
+                "-show_entries",
+                "stream=height",
+                "-of",
+                "csv=s=x:p=0",
+                input.absolutePath
+            )
+            val process = processBuilder.start().also { it.waitFor() }
+            val procOutput = process.inputReader().lines().toList().joinToString { it }.trim()
+
+            val inputHeight = procOutput.toIntOrNull() ?: return "Error"
+
 
             resolutions = resolutions.filter { it.toInt() <= inputHeight }
             if (resolutions.isEmpty()) {
@@ -85,7 +99,7 @@ class VideoConverter {
                 listOf("-f", "webm_dash_manifest", "-i", "${output}/${newFileNames}_$it.webm")
             }.toTypedArray()
 
-            val copyMapSwitches =  (0..resolutions.size).flatMap {
+            val copyMapSwitches = (0..resolutions.size).flatMap {
                 listOf("-map", "$it")
             }.toTypedArray()
 
@@ -94,7 +108,8 @@ class VideoConverter {
                 *manifestResSwitches,
                 "-f",
                 "webm_dash_manifest",
-                "-i", "${output}/${newFileNames}_audio_128k.webm",
+                "-i",
+                "${output}/${newFileNames}_audio_128k.webm",
                 "-c",
                 "copy",
                 *copyMapSwitches,
@@ -103,14 +118,15 @@ class VideoConverter {
                 "-adaptation_sets",
                 "id=0,streams=${resolutions.indices.joinToString(",")} id=1,streams=${resolutions.size}",
                 "-chunk_duration_ms",
-                "5000", "${output}/$newFileNames.mpd"
+                "5000",
+                "${output}/$newFileNames.mpd"
             )
 
             val completionService = CompletableFuture.allOf(*futures.toTypedArray())
             completionService.join()
             executeCommand(manifestCommand.toTypedArray())!!.join()
 
-            println("Encoding completed successfully!")
+            return "Success"
         }
 
         private fun isFFmpegInstalled(): Boolean {
@@ -120,7 +136,7 @@ class VideoConverter {
         }
 
         private fun executeCommand(command: Array<String>): CompletableFuture<Process>? {
-            val process = ProcessBuilder(*command).inheritIO().start()
+            val process = ProcessBuilder(*command).start()
             return process.onExit()
         }
     }

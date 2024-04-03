@@ -1,9 +1,10 @@
 package gay.extremist
 
-import gay.extremist.dao.AccountDao
-import gay.extremist.dao.AccountDaoImpl
 import gay.extremist.dao.DatabaseFactory
-import gay.extremist.plugins.*
+import gay.extremist.plugins.configureHTTP
+import gay.extremist.plugins.configureRouting
+import gay.extremist.plugins.configureSecurity
+import gay.extremist.plugins.configureSerialization
 import gay.extremist.plugins.routes.staticRoutes
 import io.ktor.server.application.*
 
