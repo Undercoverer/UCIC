@@ -14,6 +14,7 @@ import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
+import io.ktor.server.plugins.partialcontent.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -48,7 +49,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleUpdateVideo() {
 
 suspend fun PipelineContext<Unit, ApplicationCall>.handleUploadVideo() {
     val headers = requiredHeaders(headerAccountId, headerToken) ?: return
-    val accountId = idParameter() ?: return
+    val accountId = convert(headers[headerAccountId], String::toInt) ?: return
 
     val token = headers[headerToken]
     val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
@@ -60,11 +61,12 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleUploadVideo() {
     }.getOrNull() ?: return call.respond(ErrorResponse.videoUploadFailed)
 
     var title = ""
-    val fileName = ""
     var videoDescription = ""
-    var tags: Array<String> = emptyArray()
+    var tags = emptyArray<String>()
+    var originalFileName = ""
 
     val timestamp = System.currentTimeMillis()
+    val fileUploadLocation = "$TMP_VIDEO_STORAGE/${account.id}/$timestamp"
     multiPartData.forEachPart {
         when (it) {
             is PartData.FormItem -> when (it.name) {
@@ -75,10 +77,13 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleUploadVideo() {
             }
 
             is PartData.FileItem -> {
-                val originalFileName = it.originalFileName ?: "upload.mp4"
-                File("$BASE_VIDEO_STORAGE_PATH/${account.id}/$timestamp/$originalFileName").apply {
+                originalFileName = it.originalFileName!!
+
+                File(fileUploadLocation).apply {
                     mkdirs()
-                    appendBytes(it.streamProvider().readBytes())
+                    File("$fileUploadLocation/$originalFileName").apply {
+                        appendBytes(it.streamProvider().readBytes())
+                    }
                 }
             }
 
@@ -86,6 +91,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleUploadVideo() {
         }
         it.dispose()
     }
+    if (originalFileName.isEmpty()) return call.respond(ErrorResponse.videoUploadFailed)
 
     when {
         title.isEmpty() -> return call.respond(ErrorResponse.videoTitleEmpty)
@@ -101,7 +107,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleUploadVideo() {
 
     val video = videoDao.createVideo(
         account,
-        "$TMP_VIDEO_STORAGE/${account.id}/$timestamp/$fileName",
+        "$fileUploadLocation/$originalFileName",
         title,
         videoDescription,
         tagObjects,
@@ -112,11 +118,18 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleUploadVideo() {
     val newOutputDir = File("$BASE_VIDEO_STORAGE_PATH/${video.id.value}").apply(File::mkdirs)
 
     // May take some time (much)
-    VideoConverter.convert(video.videoPath, newOutputDir.canonicalPath)
+    when (VideoConverter.convert(video.videoPath, newOutputDir.canonicalPath)) {
+        "Success" -> {
+            File(fileUploadLocation).deleteRecursively()
+            videoDao.updateVideoPath(video.id.value, "/static/videos/${video.id.value}")
+        }
 
-    File("$TMP_VIDEO_STORAGE/${account.id}/$timestamp/").deleteRecursively()
-
-    videoDao.updateVideoPath(video.id.value, "/static/videos/${video.id.value}")
+        "Error" -> {
+            File(fileUploadLocation).deleteRecursively()
+            videoDao.deleteVideo(video.id.value)
+            call.respond(ErrorResponse.videoConvertFailed)
+        }
+    }
 }
 
 suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteVideo() {
@@ -169,5 +182,6 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetVideo() {
 
 
 fun Application.staticRoutes() = routing {
+    install(PartialContent)
     staticFiles("/static/videos", File(BASE_VIDEO_STORAGE_PATH))
 }

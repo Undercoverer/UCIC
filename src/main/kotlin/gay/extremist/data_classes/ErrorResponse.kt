@@ -44,6 +44,11 @@ data class ErrorResponse(
             )
         }
 
+        val videoConvertFailed = ErrorResponse(
+            error = "video",
+            message = "Video conversion failed",
+            status = HttpStatusCode.InternalServerError.value,
+        )
         val videoDeleteFailed = ErrorResponse(
             error = "video",
             message = "Video delete failed",
