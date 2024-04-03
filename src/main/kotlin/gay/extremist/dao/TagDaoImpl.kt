@@ -44,6 +44,22 @@ class TagDaoImpl : TagDao {
             .firstOrNull()
     }
 
+    override suspend fun findTagsBySubstring(substring: String): List<Tag> = dbQuery {
+        Tag.find {
+            Tags.tag like "%$substring%"
+        }.toList()
+    }
+
+    override suspend fun getPresetTags(): List<Tag> = dbQuery {
+        Tag.find {
+            Tags.isPreset eq true
+        }.toList()
+    }
+
+    override suspend fun getVideosForTag(tagId: Int): List<Video> = dbQuery {
+        readTag(tagId)?.videos?.toList() ?: emptyList()
+    }
+
 }
 
 val tagDao: TagDao = TagDaoImpl().apply {

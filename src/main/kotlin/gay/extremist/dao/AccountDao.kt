@@ -1,7 +1,9 @@
 package gay.extremist.dao
 
 import gay.extremist.models.Account
+import gay.extremist.models.Playlist
 import gay.extremist.models.Tag
+import gay.extremist.models.Video
 
 interface AccountDao {
 
@@ -16,4 +18,6 @@ interface AccountDao {
     suspend fun removeFollowedAccount(id: Int, account: Account): Boolean
     suspend fun addFollowedTag(id: Int, tag: Tag): Boolean
     suspend fun removeFollowedTag(id: Int, tag: Tag): Boolean
+    suspend fun getVideosFromAccount(accountId: Int): List<Video>
+    suspend fun getPlaylistsFromAccount(accountId: Int): List<Playlist>
 }

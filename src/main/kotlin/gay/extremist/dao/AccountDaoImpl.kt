@@ -1,13 +1,12 @@
 package gay.extremist.dao
 
 import gay.extremist.dao.DatabaseFactory.dbQuery
-import gay.extremist.models.Account
-import gay.extremist.models.Accounts
-import gay.extremist.models.Tag
+import gay.extremist.models.*
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.SizedCollection
 import org.jetbrains.exposed.sql.or
 import java.util.*
+import javax.security.auth.login.AccountNotFoundException
 
 
 class AccountDaoImpl : AccountDao {
@@ -15,12 +14,13 @@ class AccountDaoImpl : AccountDao {
     override suspend fun createAccount(username: String, email: String, password: String): Account? = dbQuery {
         // Ensures no duplicate usernames and no reused emails
         val account = Account.find { (Accounts.username eq username) or (Accounts.email eq email) }.firstOrNull()
+        val hashedPassword = password.hashCode().toString()
         when (account) {
             null -> Account.new {
                 this.username = username
                 this.email = email
-                this.password = password
-                this.token = UUID.nameUUIDFromBytes((username + password).toByteArray()).toString()
+                this.password = hashedPassword
+                this.token = UUID.nameUUIDFromBytes((username + hashedPassword).toByteArray()).toString()
             }
             else -> null
         }
@@ -40,7 +40,7 @@ class AccountDaoImpl : AccountDao {
             else -> {
                 account.username = username
                 account.email = email
-                account.password = password
+                account.password = password.hashCode().toString()
                 true
             }
         }
@@ -59,7 +59,7 @@ class AccountDaoImpl : AccountDao {
     override suspend fun getToken(email: String, password: String): String? = dbQuery {
         Account.find {
             Accounts.email eq email
-            Accounts.password eq password
+            Accounts.password eq password.hashCode().toString()
         }.firstOrNull()?.token
     }
 
@@ -112,6 +112,18 @@ class AccountDaoImpl : AccountDao {
             true
         } catch (e: NullPointerException) {
             false
+        }
+    }
+
+    override suspend fun getVideosFromAccount(accountId: Int): List<Video> {
+        return dbQuery {
+            readAccount(accountId)?.videos?.toList() ?: emptyList()
+        }
+    }
+
+    override suspend fun getPlaylistsFromAccount(accountId: Int): List<Playlist> {
+        return dbQuery {
+            readAccount(accountId)?.playlists?.toList() ?: emptyList()
         }
     }
 

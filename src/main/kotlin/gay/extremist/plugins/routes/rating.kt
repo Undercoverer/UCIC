@@ -4,5 +4,11 @@ import io.ktor.server.routing.*
 import gay.extremist.dao.ratingDao
 
 fun Route.createRatingRoutes() = route("/ratings") {
-    val ratingDao = ratingDao
+    //    ratingDao.createRating()
+    //    ratingDao.readRating()
+    //    ratingDao.updateRating()
+    //    ratingDao.deleteRating()
+    //    ratingDao.createOrUpdateRating()
+    //    ratingDao.getIdByVideoAndAccount()
 }
+

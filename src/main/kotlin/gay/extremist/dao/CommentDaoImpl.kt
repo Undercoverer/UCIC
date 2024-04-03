@@ -41,16 +41,12 @@ class CommentDaoImpl : CommentDao {
         return@dbQuery true
     }
 
-    override suspend fun getCommentsOnVideo(videoId: Int): List<Comment> = dbQuery {
-        return@dbQuery Comment.find { (Comments.videoID eq videoId) and (Comments.parentID eq null) }.toList()
+    override suspend fun getToplevelCommentsOnVideo(videoId: Int): List<Comment> = dbQuery {
+        videoDao.readVideo(videoId)?.comments?.filter { it.parentComment == null }?.toList() ?: emptyList()
     }
 
     override suspend fun getCommentsOnComment(commentId: Int): List<Comment> = dbQuery {
-        return@dbQuery Comment.find { Comments.parentID eq commentId }.toList()
-    }
-
-    override suspend fun getCommentsOnAccount(accountId: Int): List<Comment> = dbQuery {
-        return@dbQuery Comment.find { Comments.accountID eq accountId }.toList()
+        Comment.find { Comments.parentID eq commentId }.toList()
     }
 }
 

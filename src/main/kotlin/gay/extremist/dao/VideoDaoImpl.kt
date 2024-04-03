@@ -85,6 +85,10 @@ class VideoDaoImpl : VideoDao {
             false
         }
     }
+
+    override suspend fun getCommentsOnVideo(id: Int): List<Comment> = dbQuery {
+        readVideo(id)?.comments?.toList() ?: emptyList()
+    }
 }
 
 val videoDao: VideoDao = VideoDaoImpl()
