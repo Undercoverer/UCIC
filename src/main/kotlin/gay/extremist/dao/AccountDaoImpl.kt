@@ -22,8 +22,7 @@ class AccountDaoImpl : AccountDao {
             null -> Account.new {
                 this.username = username
                 this.email = email
-
-                this.password = sha256.digest(password.toByteArray()).toString()
+                this.password = password.hashCode().toString()
                 this.token = UUID.nameUUIDFromBytes((username + password).toByteArray()).toString()
             }
             else -> null
@@ -44,7 +43,7 @@ class AccountDaoImpl : AccountDao {
             else -> {
                 account.username = username
                 account.email = email
-                account.password = sha256.digest(password.toByteArray()).toString()
+                account.password = password.hashCode().toString()
                 true
             }
         }
@@ -63,7 +62,9 @@ class AccountDaoImpl : AccountDao {
     override suspend fun getToken(email: String, password: String): String? = dbQuery {
         Account.find {
             Accounts.email eq email
-            Accounts.password eq sha256.digest(password.toByteArray()).toString()
+            Accounts.password eq password.hashCode().toString().also {
+                println(password.hashCode().toString())
+            }
         }.firstOrNull()?.token
     }
 
@@ -136,7 +137,8 @@ class AccountDaoImpl : AccountDao {
 val accountDao: AccountDao = AccountDaoImpl().apply {
     runBlocking {
         if (readAccountAll().isEmpty()) {
-            createAccount("admin", "admin@fakemail.com", "password")
+            val acc = createAccount("admin", "admin@fakemail.com", "password")
+            println(acc?.password)
         }
     }
 }
