@@ -7,6 +7,7 @@ import gay.extremist.dao.accountDao
 import gay.extremist.dao.tagDao
 import gay.extremist.dao.videoDao
 import gay.extremist.data_classes.ErrorResponse
+import gay.extremist.data_classes.TagResponse
 import gay.extremist.data_classes.VideoResponse
 import gay.extremist.models.Tag
 import gay.extremist.util.*
@@ -177,8 +178,8 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetVideo() {
             video.title,
             video.description,
             video.videoPath,
-            dbQuery { video.tags.map { it.tag } },
-            video.creator.id.value,
+            dbQuery { video.tags.map { TagResponse(it.id.value, it.tag, it.category) } },
+            dbQuery { video.creator.id.value},
             video.uploadDate.toString()
         )
     )

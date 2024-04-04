@@ -13,7 +13,6 @@ fun Application.configureSerialization() {
             prettyPrint = true
             isLenient = true
             ignoreUnknownKeys = true
-            explicitNulls = false
         })
     }
 }

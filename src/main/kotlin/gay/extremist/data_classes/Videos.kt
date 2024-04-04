@@ -9,7 +9,14 @@ data class VideoResponse(
     val title: String,
     val description: String,
     val videoPath: String,
-    val tags: List<String>,
+    val tags: List<TagResponse>,
     val creatorId: Int,
     val uploadDate: String
+)
+
+@Serializable
+data class VideoListObject(
+    val id: Int,
+    val title: String,
+    val videoPath: String
 )
