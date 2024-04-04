@@ -36,7 +36,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetAccountVideo
     val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
     val videos = accountDao.getVideosFromAccount(accountId)
     call.respond(videos.map {
-        listOf(it.id.value.toString(), it.title, it.videoPath)
+        VideoListObject(it.id.value, it.title, it.videoPath)
     })
 }
 
@@ -63,9 +63,9 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteAccount()
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetAccount() {
-    val headers = requiredHeaders(headerAccountId) ?: return
+    // val headers = requiredHeaders(headerAccountId) ?: return
     val optHeaders = optionalHeaders(headerToken)
-    val accountId = convert(headers[headerAccountId], String::toInt) ?: return
+    val accountId = convert(call.parameters["id"], String::toInt) ?: return
 
     val token = optHeaders[headerToken]
     val accountWithToken = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
