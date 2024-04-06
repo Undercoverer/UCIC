@@ -1,3 +1,5 @@
+package gay.extremist.util
+
 import io.ktor.util.reflect.*
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.IntEntity

@@ -5,7 +5,7 @@ import gay.extremist.plugins.configureHTTP
 import gay.extremist.plugins.configureRouting
 import gay.extremist.plugins.configureSecurity
 import gay.extremist.plugins.configureSerialization
-import gay.extremist.plugins.routes.staticRoutes
+import gay.extremist.routes.staticRoutes
 import io.ktor.server.application.*
 
 fun main(args: Array<String>) {

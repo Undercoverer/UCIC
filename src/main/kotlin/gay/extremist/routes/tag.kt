@@ -1,4 +1,4 @@
-package gay.extremist.plugins.routes
+package gay.extremist.routes
 
 import gay.extremist.dao.tagDao
 import io.ktor.server.routing.*

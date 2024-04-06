@@ -1,15 +1,14 @@
-package gay.extremist.plugins.routes
+package gay.extremist.routes
 
 import gay.extremist.dao.DatabaseFactory.dbQuery
 import gay.extremist.dao.accountDao
 import gay.extremist.dao.commentDao
 import gay.extremist.dao.videoDao
-import gay.extremist.data_classes.CommentModel
-import gay.extremist.data_classes.CommentObject
 import gay.extremist.data_classes.ErrorResponse
 import gay.extremist.models.Comment
 import gay.extremist.util.*
 import io.ktor.http.*
+import io.ktor.http.cio.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -17,46 +16,34 @@ import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
 
 
-// DONE I THINK
 fun Route.createCommentRoutes() = route("/comments") {
     route("/video/{id}") {
         get { handleGetComments() }
         post { handleCreateComment() }
+    }
+    route("/{id}") {
+        get { handleGetCommentsOnComment() }
         put { handleUpdateComment() }
         delete { handleDeleteComment() }
-    }
-    route("/{id}"){
-        get { handleGetCommentsOnComment() }
     }
 }
 
 
 suspend fun PipelineContext<Unit, ApplicationCall>.handleGetCommentsOnComment() = with(call) {
     val comment = commentDao.readComment(idParameter() ?: return) ?: return respond(ErrorResponse.notFound("Comment"))
-    respond(commentDao.getCommentsOnComment(comment.id.value).map {
-        dbQuery {
-            CommentModel(
-                it.id.value, comment.video.id.value, it.account.id.value, it.parentComment?.id?.value, it.comment
-            )
-        }
-    })
+    respond(commentDao.getCommentsOnComment(comment.id.value).map { it.toResponse<Comment, Response>() })
 }
+
 suspend fun PipelineContext<Unit, ApplicationCall>.handleGetComments() = with(call) {
     val video = videoDao.readVideo(idParameter() ?: return) ?: return respond(ErrorResponse.notFound("Video"))
-    respond(commentDao.getToplevelCommentsOnVideo(video.id.value).map {
-        dbQuery {
-            CommentModel(
-                it.id.value, video.id.value, it.account.id.value, it.parentComment?.id?.value, it.comment
-            )
-        }
-    })
+    respond(commentDao.getToplevelCommentsOnVideo(video.id.value).map { it.toResponse<Comment, Response>() })
 }
 
 suspend fun PipelineContext<Unit, ApplicationCall>.handleCreateComment() = with(call) {
-    val headers = requiredHeaders(headerVideoId, headerAccountId, headerToken) ?: return
+    val headers = requiredHeaders(headerAccountId, headerToken) ?: return
     val optionalHeader = optionalHeaders(headerParentCommentId)
 
-    val videoId = convert(headers[headerVideoId], String::toInt) ?: return
+    val videoId = idParameter() ?: return
     val video = videoDao.readVideo(videoId) ?: return respond(ErrorResponse.notFound("Video"))
 
     val accountId = convert(headers[headerAccountId], String::toInt) ?: return
@@ -65,39 +52,33 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleCreateComment() = with(
     val token = headers[headerToken] ?: return
     if (account.token != token) return respond(ErrorResponse.accountTokenInvalid)
 
-    val commentObject = receiveCatching<CommentObject>().onFailureOrNull {
-        call.respond(ErrorResponse.schema.apply { data = it.message })
-    } ?: return
-
+    val commentText = receiveText()
 
     val parentCommentIdString = optionalHeader[headerParentCommentId]
-    var parentComment: Comment? = null
+    val parentComment: Comment?
     val comment = if (parentCommentIdString == null) {
-        commentDao.createComment(account, video, null, commentObject.comment)
+        commentDao.createComment(account, video, null, commentText)
     } else {
         parentComment =
             commentDao.readComment(convert(parentCommentIdString, String::toInt) ?: return) ?: return respond(
                 ErrorResponse.notFound("Comment")
             )
-        commentDao.createComment(account, video, parentComment, commentObject.comment)
+        commentDao.createComment(account, video, parentComment, commentText)
     }
 
-    respond(
-        status = HttpStatusCode.Created, message = CommentModel(
-            comment.id.value, videoId, accountId, parentComment?.id?.value, commentObject.comment
-        )
-    )
+    respond(comment.toResponse<Comment, Response>())
 }
 
 suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteComment() = with(call) {
-    val headers = requiredHeaders(headerAccountId, headerToken, headerCommentId) ?: return
+    val headers = requiredHeaders(headerAccountId, headerToken) ?: return
+    val commentId = idParameter() ?: return
+
     val accountId = convert(headers[headerAccountId], String::toInt) ?: return
     val account = accountDao.readAccount(accountId) ?: return respond(ErrorResponse.notFound("Account"))
 
     val token = headers[headerToken] ?: return
     if (account.token != token) return respond(ErrorResponse.accountTokenInvalid)
 
-    val commentId = convert(headers[headerCommentId], String::toInt) ?: return
     val comment = commentDao.readComment(commentId) ?: return respond(ErrorResponse.notFound("Comment"))
     if (dbQuery { account.id.value != comment.account.id.value }) return respond(ErrorResponse.notOwnedByAccount("Comment"))
 
@@ -107,9 +88,9 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteComment() = with(
 }
 
 suspend fun PipelineContext<Unit, ApplicationCall>.handleUpdateComment() = with(call) {
-    val headers = requiredHeaders(headerCommentId, headerAccountId, headerToken) ?: return
+    val headers = requiredHeaders(headerAccountId, headerToken) ?: return
 
-    val commentId = convert(headers[headerCommentId], String::toInt) ?: return
+    val commentId = idParameter() ?: return
     val comment = commentDao.readComment(commentId) ?: return respond(ErrorResponse.notFound("Comment"))
 
     val accountId = convert(headers[headerAccountId], String::toInt) ?: return
