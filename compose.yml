@@ -9,9 +9,8 @@
           condition: service_healthy
     db:
       image: postgres
-#      user: "1000:100"
       volumes:
-        - ./tmp/db:/var/lib/postgresql/data
+        - /var/lib/postgresql/ucic/data:/var/lib/postgresql/ucic/data
       environment:
         POSTGRES_DB: capstone_db
         POSTGRES_PASSWORD: 12345678

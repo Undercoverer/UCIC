@@ -23,5 +23,4 @@ class Comment(id: EntityID<Int>): Entity<Int>(id){
     var comment by Comments.comment
 
     val childComments by Comment optionalReferrersOn Comments.parentID
-
 }

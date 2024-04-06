@@ -1,4 +1,4 @@
-package gay.extremist.plugins.routes
+package gay.extremist.routes
 
 import gay.extremist.BASE_VIDEO_STORAGE_PATH
 import gay.extremist.TMP_VIDEO_STORAGE

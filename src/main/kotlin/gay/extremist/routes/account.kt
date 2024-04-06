@@ -1,9 +1,11 @@
-package gay.extremist.plugins.routes
+package gay.extremist.routes
 
 import gay.extremist.dao.accountDao
 import gay.extremist.data_classes.*
+import gay.extremist.models.Video
 import gay.extremist.util.*
 import io.ktor.http.*
+import io.ktor.http.cio.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -19,7 +21,6 @@ fun Route.createAccountRoutes() = route("/accounts") {
     route("/{id}") {
         get { handleGetAccount() }
         delete { handleDeleteAccount() }
-
         post { call.respond(HttpStatusCode.NotImplemented) }
 
         route("/videos") {
@@ -35,9 +36,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetAccountVideo
     val accountId = idParameter() ?: return
     val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
     val videos = accountDao.getVideosFromAccount(accountId)
-    call.respond(videos.map {
-        VideoListObject(it.id.value, it.title, it.videoPath)
-    })
+    call.respond(videos.map { it.toResponse<Video, Video>() })
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetAccountPlaylists() {
@@ -63,9 +62,8 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteAccount()
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetAccount() {
-    // val headers = requiredHeaders(headerAccountId) ?: return
     val optHeaders = optionalHeaders(headerToken)
-    val accountId = convert(call.parameters["id"], String::toInt) ?: return
+    val accountId = idParameter() ?: return
 
     val token = optHeaders[headerToken]
     val accountWithToken = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))

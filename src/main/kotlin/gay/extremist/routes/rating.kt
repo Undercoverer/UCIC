@@ -1,4 +1,4 @@
-package gay.extremist.plugins.routes
+package gay.extremist.routes
 
 import io.ktor.server.routing.*
 import gay.extremist.dao.ratingDao
