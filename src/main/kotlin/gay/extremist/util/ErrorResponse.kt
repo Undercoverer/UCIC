@@ -1,4 +1,4 @@
-package gay.extremist.data_classes
+package gay.extremist.util
 
 import io.ktor.http.*
 import kotlinx.serialization.Contextual

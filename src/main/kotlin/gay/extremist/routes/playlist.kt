@@ -1,20 +1,17 @@
 package gay.extremist.routes
 
-import gay.extremist.dao.DatabaseFactory.dbQuery
 import gay.extremist.dao.accountDao
 import gay.extremist.dao.playlistDao
 import gay.extremist.dao.videoDao
-import gay.extremist.data_classes.ErrorResponse
-import gay.extremist.data_classes.NewPlaylistData
-import gay.extremist.data_classes.PlaylistResponse
+import gay.extremist.util.ErrorResponse
+import gay.extremist.models.NewPlaylistData
+import gay.extremist.models.PlaylistResponse
 import gay.extremist.util.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
-import io.netty.handler.codec.http.HttpResponseStatus
 
 // DONE
 fun Route.createPlaylistRoutes() = route("/playlists") {
@@ -101,16 +98,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetPlaylist() {
     val playlistId = idParameter() ?: return
     val playlist = playlistDao.readPlaylist(playlistId) ?: return call.respond(ErrorResponse.notFound("Playlist"))
 
-    call.respond(dbQuery {
-        PlaylistResponse(
-            playlist.id.value,
-            playlist.owner.id.value,
-            playlist.name,
-            playlist.description,
-            playlist.videos.map {
-                it.id.value
-            })
-    })
+    call.respond(playlist.toResponse())
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.handlePlaylistCreation() {

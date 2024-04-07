@@ -2,13 +2,10 @@ package gay.extremist.routes
 
 import gay.extremist.BASE_VIDEO_STORAGE_PATH
 import gay.extremist.TMP_VIDEO_STORAGE
-import gay.extremist.dao.DatabaseFactory.dbQuery
 import gay.extremist.dao.accountDao
 import gay.extremist.dao.tagDao
 import gay.extremist.dao.videoDao
-import gay.extremist.data_classes.ErrorResponse
-import gay.extremist.data_classes.TagResponse
-import gay.extremist.data_classes.VideoResponse
+import gay.extremist.util.ErrorResponse
 import gay.extremist.models.Tag
 import gay.extremist.util.*
 import io.ktor.http.*
@@ -34,9 +31,9 @@ fun Route.createVideoRoutes() = route("/videos") {
 
     post { handleUploadVideo() }
 
-//    videoDao.addTagsToVideo()
-//    videoDao.removeTagsFromVideo()
-//    videoDao.getCommentsOnVideo()
+    //    videoDao.addTagsToVideo()
+    //    videoDao.removeTagsFromVideo()
+    //    videoDao.getCommentsOnVideo()
 }
 
 suspend fun PipelineContext<Unit, ApplicationCall>.handleUpdateVideo() {
@@ -137,55 +134,39 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleUploadVideo() {
     }
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteVideo() {
+suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteVideo() = with(call) {
     val headers = requiredHeaders(headerAccountId, headerToken) ?: return
 
     val videoId = idParameter() ?: return
-    val video = videoDao.readVideo(videoId) ?: return call.respond(ErrorResponse.notFound("Video"))
+    val video = videoDao.readVideo(videoId) ?: return respond(ErrorResponse.notFound("Video"))
 
     val accountId = convert(headers[headerAccountId], String::toInt) ?: return
-    val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
+    val account = accountDao.readAccount(accountId) ?: return respond(ErrorResponse.notFound("Account"))
 
     val token = headers[headerToken] ?: return
 
-    when {
-        transaction { account.id.value != video.creator.id.value } -> {
-            return call.respond(ErrorResponse.notOwnedByAccount("Video"))
-        }
-
-        (account.token != token) -> return call.respond(ErrorResponse.accountTokenInvalid)
-
-        else -> {
-            if (File("$BASE_VIDEO_STORAGE_PATH/${video.id.value}").deleteRecursively()) return call.respond(
-                ErrorResponse.videoDeleteFailed
-            )
-
-            videoDao.deleteVideo(videoId)
-
-            call.respond(HttpStatusCode.OK)
-        }
+    if (transaction { account.id.value != video.creator.id.value }) {
+        return respond(ErrorResponse.notOwnedByAccount("Video"))
     }
+    if ((account.token != token)) return respond(ErrorResponse.accountTokenInvalid)
+    if (File("$BASE_VIDEO_STORAGE_PATH/${video.id.value}").deleteRecursively()) return respond(ErrorResponse.videoDeleteFailed)
+
+    videoDao.deleteVideo(videoId)
+    respond(HttpStatusCode.NoContent)
 }
 
-private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetVideo() {
+
+// 100% Done
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetVideo() = with(call) {
     val videoId = idParameter() ?: return
-    val video = videoDao.readVideo(videoId) ?: return call.respond(ErrorResponse.notFound("Video"))
-    if (video.videoPath.contains("tmp")) return call.respond(ErrorResponse.videoNotProcessed)
+    val video = videoDao.readVideo(videoId) ?: return respond(ErrorResponse.notFound("Video"))
+    if (video.videoPath.contains("tmp")) return respond(ErrorResponse.videoNotProcessed)
 
-    call.respond(
-        VideoResponse(
-            video.id.value,
-            video.title,
-            video.description,
-            video.videoPath,
-            dbQuery { video.tags.map { TagResponse(it.id.value, it.tag, it.category) } },
-            dbQuery { video.creator.id.value},
-            video.uploadDate.toString()
-        )
-    )
+    respond(video.toResponse())
 }
 
 
+// 100% Done
 fun Application.staticRoutes() = routing {
     install(PartialContent)
     staticFiles("/static/videos", File(BASE_VIDEO_STORAGE_PATH))
