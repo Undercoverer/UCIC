@@ -3,9 +3,7 @@ package gay.extremist.dao
 import gay.extremist.dao.DatabaseFactory.dbQuery
 import gay.extremist.models.Account
 import gay.extremist.models.Comment
-import gay.extremist.models.Comments
 import gay.extremist.models.Video
-import org.jetbrains.exposed.sql.and
 
 class CommentDaoImpl : CommentDao {
     override suspend fun createComment(
@@ -46,7 +44,7 @@ class CommentDaoImpl : CommentDao {
     }
 
     override suspend fun getCommentsOnComment(commentId: Int): List<Comment> = dbQuery {
-        Comment.find { Comments.parentID eq commentId }.toList()
+        Comment.findById(commentId)?.childComments?.toList() ?: emptyList()
     }
 }
 

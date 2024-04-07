@@ -1,6 +1,6 @@
 package gay.extremist.models
 
-import gay.extremist.models.Video.Companion.referrersOn
+import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -32,4 +32,44 @@ class Video(id: EntityID<Int>): Entity<Int>(id) {
     var tags by Tag via TagLabelsVideo
     val comments by Comment referrersOn Comments.videoID
     val ratings by Rating referrersOn Ratings.videoID
+
+    fun toResponse(): VideoResponse {
+        return VideoResponse(
+            id = id.value,
+            title = title,
+            description = description,
+            videoPath = videoPath,
+            tags = tags.map { it.tag },
+            creator = creator.id.value,
+            uploadDate = uploadDate.toString(),
+            rating = ratings.map { it.rating }.average()
+        )
+    }
+
+    fun toDisplayResponse(): VideoDisplayResponse {
+        return VideoDisplayResponse(
+            id = id.value,
+            title = title,
+            videoPath = videoPath
+        )
+    }
 }
+
+@Serializable
+data class VideoResponse(
+    val id: Int,
+    val title: String,
+    val description: String,
+    val videoPath: String,
+    val tags: List<String>,
+    val creator: Int,
+    val uploadDate: String,
+    val rating: Double
+)
+
+@Serializable
+data class VideoDisplayResponse(
+    val id: Int,
+    val title: String,
+    val videoPath: String
+)

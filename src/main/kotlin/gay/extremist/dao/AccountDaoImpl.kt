@@ -5,26 +5,22 @@ import gay.extremist.models.*
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.SizedCollection
 import org.jetbrains.exposed.sql.or
-import java.util.*
-
 import java.security.MessageDigest
+import java.util.*
 
 
 class AccountDaoImpl : AccountDao {
-    // Used to hash passwords
-    private val sha256 = MessageDigest.getInstance("SHA-256")
-
     override suspend fun createAccount(username: String, email: String, password: String): Account? = dbQuery {
-        // Ensures no duplicate usernames and no reused emails
         val account = Account.find { (Accounts.username eq username) or (Accounts.email eq email) }.firstOrNull()
         val hashedPassword = password.hashCode().toString()
         when (account) {
             null -> Account.new {
                 this.username = username
                 this.email = email
-                this.password = password.hashCode().toString()
-                this.token = UUID.nameUUIDFromBytes((username + password).toByteArray()).toString()
+                this.password = hashedPassword
+                this.token = UUID.nameUUIDFromBytes((username + hashedPassword).toByteArray()).toString()
             }
+
             else -> null
         }
     }
@@ -38,23 +34,23 @@ class AccountDaoImpl : AccountDao {
     }
 
     override suspend fun updateAccount(id: Int, username: String, email: String, password: String): Boolean = dbQuery {
-        return@dbQuery when (val account = Account.findById(id)) {
-            null -> false
+        when (val account = Account.findById(id)) {
+            null -> return@dbQuery false
             else -> {
                 account.username = username
                 account.email = email
                 account.password = password.hashCode().toString()
-                true
+                return@dbQuery true
             }
         }
     }
 
     override suspend fun deleteAccount(id: Int): Boolean = dbQuery {
-        return@dbQuery when (val account = Account.findById(id)) {
-            null -> false
+        when (val account = Account.findById(id)) {
+            null -> return@dbQuery false
             else -> {
                 account.delete()
-                true
+                return@dbQuery true
             }
         }
     }
@@ -84,6 +80,14 @@ class AccountDaoImpl : AccountDao {
         }
     }
 
+    override suspend fun getFollowedTags(id: Int): List<Tag> = dbQuery {
+        Account.findById(id)?.followedTags?.toList() ?: emptyList()
+    }
+
+    override suspend fun getFollowedAccounts(id: Int): List<Account> = dbQuery {
+        Account.findById(id)?.followedAccounts?.toList() ?: emptyList()
+    }
+
     override suspend fun removeFollowedAccount(id: Int, account: Account): Boolean = dbQuery {
         val follower = Account.findById(id)
         val followedAccounts = follower?.followedAccounts
@@ -97,48 +101,29 @@ class AccountDaoImpl : AccountDao {
     }
 
     override suspend fun addFollowedTag(id: Int, tag: Tag): Boolean = dbQuery {
-        val follower = Account.findById(id)
-        val followedAccounts = follower?.followedTags
+        val follower = Account.findById(id) ?: return@dbQuery false
+        val followedAccounts = follower.followedTags
 
-        try {
-            follower?.followedTags = SizedCollection(followedAccounts!! + tag)
-            true
-        } catch (e: NullPointerException) {
-            false
-        }
+        runCatching {
+            follower.followedTags = SizedCollection(followedAccounts + tag)
+        }.isSuccess
     }
 
     override suspend fun removeFollowedTag(id: Int, tag: Tag): Boolean = dbQuery {
-        val follower = Account.findById(id)
-        val followedAccounts = follower?.followedTags
+        val follower = Account.findById(id) ?: return@dbQuery false
+        val followedAccounts = follower.followedTags
 
-        try {
-            follower?.followedTags = SizedCollection(followedAccounts!! - tag)
-            true
-        } catch (e: NullPointerException) {
-            false
-        }
+        runCatching {
+            follower.followedTags = SizedCollection(followedAccounts - tag)
+        }.isSuccess
     }
 
-    override suspend fun getVideosFromAccount(accountId: Int): List<Video> {
-        return dbQuery {
-            readAccount(accountId)?.videos?.toList() ?: emptyList()
-        }
-    }
+    override suspend fun getVideosFromAccount(accountId: Int): List<Video> =
+        dbQuery { readAccount(accountId)?.videos?.toList() ?: emptyList() }
 
-    override suspend fun getPlaylistsFromAccount(accountId: Int): List<Playlist> {
-        return dbQuery {
-            readAccount(accountId)?.playlists?.toList() ?: emptyList()
-        }
-    }
-
-}
-
-val accountDao: AccountDao = AccountDaoImpl().apply {
-    runBlocking {
-        if (readAccountAll().isEmpty()) {
-            val acc = createAccount("admin", "admin@fakemail.com", "password")
-            println(acc?.password)
-        }
+    override suspend fun getPlaylistsFromAccount(accountId: Int): List<Playlist> = dbQuery {
+        readAccount(accountId)?.playlists?.toList() ?: emptyList()
     }
 }
+
+val accountDao: AccountDao = AccountDaoImpl()
