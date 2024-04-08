@@ -16,3 +16,6 @@ data class UnprivilegedAccessAccount(val accountID: Int, val username: String, v
 
 @Serializable
 data class PrivilegedAccessAccount(val accountID: Int, val username: String, val email: String, val password: String, val token: String)
+
+@Serializable
+data class VideoCreator(val id: Int, val username: String)

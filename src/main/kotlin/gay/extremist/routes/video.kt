@@ -6,6 +6,7 @@ import gay.extremist.dao.DatabaseFactory.dbQuery
 import gay.extremist.dao.accountDao
 import gay.extremist.dao.tagDao
 import gay.extremist.dao.videoDao
+import gay.extremist.data_classes.VideoCreator
 import gay.extremist.data_classes.ErrorResponse
 import gay.extremist.data_classes.TagResponse
 import gay.extremist.data_classes.VideoResponse
@@ -172,16 +173,9 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetVideo() {
     val video = videoDao.readVideo(videoId) ?: return call.respond(ErrorResponse.notFound("Video"))
     if (video.videoPath.contains("tmp")) return call.respond(ErrorResponse.videoNotProcessed)
 
+    videoDao.incrementViewCount(videoId)
     call.respond(
-        VideoResponse(
-            video.id.value,
-            video.title,
-            video.description,
-            video.videoPath,
-            dbQuery { video.tags.map { TagResponse(it.id.value, it.tag, it.category) } },
-            dbQuery { video.creator.id.value},
-            video.uploadDate.toString()
-        )
+         video.toVideoResponse()
     )
 }
 

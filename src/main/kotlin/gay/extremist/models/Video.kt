@@ -1,5 +1,10 @@
 package gay.extremist.models
 
+import gay.extremist.dao.DatabaseFactory.dbQuery
+import gay.extremist.data_classes.TagResponse
+import gay.extremist.data_classes.VideoCreator
+import gay.extremist.data_classes.VideoListObject
+import gay.extremist.data_classes.VideoResponse
 import gay.extremist.models.Video.Companion.referrersOn
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
@@ -32,4 +37,25 @@ class Video(id: EntityID<Int>): Entity<Int>(id) {
     var tags by Tag via TagLabelsVideo
     val comments by Comment referrersOn Comments.videoID
     val ratings by Rating referrersOn Ratings.videoID
+
+    suspend fun toVideoResponse(): VideoResponse{
+        return VideoResponse(
+            this.id.value,
+            this.title,
+            this.description,
+            this.videoPath,
+            dbQuery { this.tags.map { TagResponse(it.id.value, it.tag, it.category) } },
+            dbQuery { VideoCreator(this.creator.id.value, this.creator.username) },
+            this.viewCount,
+            this.uploadDate.toString(),
+        )
+    }
+
+    suspend fun toVideoListObject(): VideoListObject{
+        return VideoListObject(
+            this.id.value,
+            this.title,
+            this.videoPath
+        )
+    }
 }

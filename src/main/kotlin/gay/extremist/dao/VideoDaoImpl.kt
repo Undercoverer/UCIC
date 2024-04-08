@@ -86,6 +86,16 @@ class VideoDaoImpl : VideoDao {
         }
     }
 
+    override suspend fun incrementViewCount(id: Int): Boolean = dbQuery{
+        return@dbQuery when (val video = Video.findById(id)) {
+            null -> false
+            else -> {
+                video.viewCount += 1
+                true
+            }
+        }
+    }
+
     override suspend fun getCommentsOnVideo(id: Int): List<Comment> = dbQuery {
         readVideo(id)?.comments?.toList() ?: emptyList()
     }

@@ -10,7 +10,8 @@ data class VideoResponse(
     val description: String,
     val videoPath: String,
     val tags: List<TagResponse>,
-    val creatorId: Int,
+    val creator: VideoCreator,
+    val viewCount: Int,
     val uploadDate: String
 )
 

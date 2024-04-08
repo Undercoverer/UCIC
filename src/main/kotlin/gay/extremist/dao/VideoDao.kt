@@ -21,6 +21,6 @@ interface VideoDao {
     suspend fun deleteVideo(id: Int): Boolean
     suspend fun addTagsToVideo(id: Int, tags: List<Tag>): Boolean
     suspend fun removeTagsFromVideo(id: Int, tags: List<Tag>): Boolean
-
+    suspend fun incrementViewCount(id: Int): Boolean
     suspend fun getCommentsOnVideo(id: Int): List<Comment>
 }
