@@ -1,11 +1,7 @@
 package gay.extremist.models
 
 import gay.extremist.dao.DatabaseFactory.dbQuery
-import gay.extremist.data_classes.TagResponse
-import gay.extremist.data_classes.VideoCreator
-import gay.extremist.data_classes.VideoListObject
-import gay.extremist.data_classes.VideoResponse
-import gay.extremist.models.Video.Companion.referrersOn
+import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -38,24 +34,44 @@ class Video(id: EntityID<Int>): Entity<Int>(id) {
     val comments by Comment referrersOn Comments.videoID
     val ratings by Rating referrersOn Ratings.videoID
 
-    suspend fun toVideoResponse(): VideoResponse{
+
+    suspend fun toResponse(): VideoResponse {
         return VideoResponse(
-            this.id.value,
-            this.title,
-            this.description,
-            this.videoPath,
-            dbQuery { this.tags.map { TagResponse(it.id.value, it.tag, it.category) } },
-            dbQuery { VideoCreator(this.creator.id.value, this.creator.username) },
-            this.viewCount,
-            this.uploadDate.toString(),
+            id = id.value,
+            title = title,
+            description = description,
+            videoPath = videoPath,
+            tags = dbQuery { tags.map { it.toResponse() }},
+            creator = dbQuery { creator.toDisplayResponse() },
+            uploadDate = uploadDate.toString(),
+            rating = ratings.map { it.rating }.average()
         )
     }
 
-    suspend fun toVideoListObject(): VideoListObject{
-        return VideoListObject(
-            this.id.value,
-            this.title,
-            this.videoPath
+    fun toDisplayResponse(): VideoDisplayResponse {
+        return VideoDisplayResponse(
+            id = id.value,
+            title = title,
+            videoPath = videoPath
         )
     }
 }
+
+@Serializable
+data class VideoResponse(
+    val id: Int,
+    val title: String,
+    val description: String,
+    val videoPath: String,
+    val tags: List<TagResponse>,
+    val creator: AccountDisplayResponse,
+    val uploadDate: String,
+    val rating: Double
+)
+
+@Serializable
+data class VideoDisplayResponse(
+    val id: Int,
+    val title: String,
+    val videoPath: String
+)

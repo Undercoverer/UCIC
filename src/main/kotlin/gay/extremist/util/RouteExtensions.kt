@@ -1,6 +1,5 @@
 package gay.extremist.util
 
-import gay.extremist.data_classes.ErrorResponse
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -9,14 +8,15 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
-suspend fun PipelineContext<Unit, ApplicationCall>.requiredHeaders(vararg headers: String): Map<String, String>? = with(call) {
-    val missing = headers.filter { request.headers[it] == null }
-    if (missing.isNotEmpty()) respond(ErrorResponse.headersNotProvided(missing)).also { return null }
+suspend fun PipelineContext<Unit, ApplicationCall>.requiredHeaders(vararg headers: String): Map<String, String>? =
+    with(call) {
+        val missing = headers.filter { request.headers[it] == null }
+        if (missing.isNotEmpty()) respond(ErrorResponse.headersNotProvided(missing)).also { return null }
 
-    return headers.associateWith { request.headers[it]!! }
-}
+        return headers.associateWith { request.headers[it]!! }
+    }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.optionalHeaders(vararg headers: String): Map<String, String?> = with(call) {
+fun PipelineContext<Unit, ApplicationCall>.optionalHeaders(vararg headers: String): Map<String, String?> = with(call) {
     return headers.associateWithNullable { request.headers[it] }
 }
 
@@ -56,8 +56,8 @@ inline fun <T> Result<T>.onFailureOrNull(action: (exception: Throwable) -> Unit)
 
     val containedVal = this.getOrNull()
     when {
-        isSuccess -> return containedVal
         (containedVal == null) -> action(Exception("Unknown error")).also { return null }
+        isSuccess -> return containedVal
         else -> action(this.exceptionOrNull()!!).also { return null }
     }
 }

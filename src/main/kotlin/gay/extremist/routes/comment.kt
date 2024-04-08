@@ -4,11 +4,10 @@ import gay.extremist.dao.DatabaseFactory.dbQuery
 import gay.extremist.dao.accountDao
 import gay.extremist.dao.commentDao
 import gay.extremist.dao.videoDao
-import gay.extremist.data_classes.ErrorResponse
+import gay.extremist.util.ErrorResponse
 import gay.extremist.models.Comment
 import gay.extremist.util.*
 import io.ktor.http.*
-import io.ktor.http.cio.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -31,17 +30,17 @@ fun Route.createCommentRoutes() = route("/comments") {
 
 suspend fun PipelineContext<Unit, ApplicationCall>.handleGetCommentsOnComment() = with(call) {
     val comment = commentDao.readComment(idParameter() ?: return) ?: return respond(ErrorResponse.notFound("Comment"))
-    respond(commentDao.getCommentsOnComment(comment.id.value).map { it.toResponse<Comment, Response>() })
+    respond(commentDao.getCommentsOnComment(comment.id.value).map(Comment::toResponse))
 }
 
 suspend fun PipelineContext<Unit, ApplicationCall>.handleGetComments() = with(call) {
     val video = videoDao.readVideo(idParameter() ?: return) ?: return respond(ErrorResponse.notFound("Video"))
-    respond(commentDao.getToplevelCommentsOnVideo(video.id.value).map { it.toResponse<Comment, Response>() })
+    respond(commentDao.getToplevelCommentsOnVideo(video.id.value).map(Comment::toResponse))
 }
 
 suspend fun PipelineContext<Unit, ApplicationCall>.handleCreateComment() = with(call) {
     val headers = requiredHeaders(headerAccountId, headerToken) ?: return
-    val optionalHeader = optionalHeaders(headerParentCommentId)
+    val optionalHeaders = optionalHeaders(headerParentCommentId)
 
     val videoId = idParameter() ?: return
     val video = videoDao.readVideo(videoId) ?: return respond(ErrorResponse.notFound("Video"))
@@ -54,7 +53,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleCreateComment() = with(
 
     val commentText = receiveText()
 
-    val parentCommentIdString = optionalHeader[headerParentCommentId]
+    val parentCommentIdString = optionalHeaders[headerParentCommentId]
     val parentComment: Comment?
     val comment = if (parentCommentIdString == null) {
         commentDao.createComment(account, video, null, commentText)
@@ -66,7 +65,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleCreateComment() = with(
         commentDao.createComment(account, video, parentComment, commentText)
     }
 
-    respond(comment.toResponse<Comment, Response>())
+    respond(comment.toResponse())
 }
 
 suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteComment() = with(call) {
