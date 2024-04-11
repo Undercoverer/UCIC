@@ -1,6 +1,6 @@
 package gay.extremist.dao
 
-import gay.extremist.dao.DatabaseFactory.dbQuery
+import gay.extremist.util.DatabaseFactory.dbQuery
 import gay.extremist.models.Account
 import gay.extremist.models.Playlist
 import gay.extremist.models.Video

@@ -1,5 +1,6 @@
 package gay.extremist.models
 
+import gay.extremist.util.DatabaseFactory.dbQuery
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
@@ -33,16 +34,18 @@ class Video(id: EntityID<Int>): Entity<Int>(id) {
     val comments by Comment referrersOn Comments.videoID
     val ratings by Rating referrersOn Ratings.videoID
 
-    fun toResponse(): VideoResponse {
+
+    suspend fun toResponse(): VideoResponse {
         return VideoResponse(
             id = id.value,
             title = title,
             description = description,
             videoPath = videoPath,
-            tags = tags.map { it.tag },
-            creator = creator.id.value,
+            tags = dbQuery { tags.map { it.toResponse() }},
+            creator = dbQuery { creator.toDisplayResponse() },
+            viewCount = viewCount,
             uploadDate = uploadDate.toString(),
-            rating = ratings.map { it.rating }.average()
+            rating = dbQuery { ratings.map { it.rating }.average() }.run { if (isNaN()) 0.0 else this }
         )
     }
 
@@ -61,8 +64,9 @@ data class VideoResponse(
     val title: String,
     val description: String,
     val videoPath: String,
-    val tags: List<String>,
-    val creator: Int,
+    val tags: List<TagResponse>,
+    val creator: AccountDisplayResponse,
+    val viewCount: Int,
     val uploadDate: String,
     val rating: Double
 )

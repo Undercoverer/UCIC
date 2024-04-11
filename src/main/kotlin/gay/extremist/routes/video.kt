@@ -162,6 +162,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetVideo() = wi
     val video = videoDao.readVideo(videoId) ?: return respond(ErrorResponse.notFound("Video"))
     if (video.videoPath.contains("tmp")) return respond(ErrorResponse.videoNotProcessed)
 
+    videoDao.incrementViewCount(videoId)
     respond(video.toResponse())
 }
 

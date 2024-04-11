@@ -1,6 +1,6 @@
 package gay.extremist.dao
 
-import gay.extremist.dao.DatabaseFactory.dbQuery
+import gay.extremist.util.DatabaseFactory.dbQuery
 import gay.extremist.models.*
 import org.jetbrains.exposed.sql.SizedCollection
 import java.io.File
@@ -83,6 +83,16 @@ class VideoDaoImpl : VideoDao {
             true
         } catch (e: NullPointerException) {
             false
+        }
+    }
+
+    override suspend fun incrementViewCount(id: Int): Boolean = dbQuery{
+        return@dbQuery when (val video = Video.findById(id)) {
+            null -> false
+            else -> {
+                video.viewCount += 1
+                true
+            }
         }
     }
 
