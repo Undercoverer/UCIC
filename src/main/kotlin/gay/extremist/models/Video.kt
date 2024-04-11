@@ -10,9 +10,10 @@ import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.javatime.CurrentDateTime
 import org.jetbrains.exposed.sql.javatime.datetime
+import org.jetbrains.exposed.sql.transactions.transaction
 
-object Videos: IntIdTable() {
-    val creatorID: Column<EntityID<Int>>  = reference("creatorID", Accounts, onDelete = ReferenceOption.CASCADE)
+object Videos : IntIdTable() {
+    val creatorID: Column<EntityID<Int>> = reference("creatorID", Accounts, onDelete = ReferenceOption.CASCADE)
     val title: Column<String> = varchar("title", 255)
     val videoPath: Column<String> = varchar("videoPath", 255)
     val description: Column<String> = text("description")
@@ -20,8 +21,8 @@ object Videos: IntIdTable() {
     val uploadDate: Column<java.time.LocalDateTime> = datetime("uploadDate").defaultExpression(CurrentDateTime)
 }
 
-class Video(id: EntityID<Int>): Entity<Int>(id) {
-    companion object: EntityClass<Int, Video> (Videos)
+class Video(id: EntityID<Int>) : Entity<Int>(id) {
+    companion object : EntityClass<Int, Video>(Videos)
 
     var creator by Account referencedOn Videos.creatorID
     var videoPath by Videos.videoPath
@@ -41,20 +42,22 @@ class Video(id: EntityID<Int>): Entity<Int>(id) {
             title = title,
             description = description,
             videoPath = videoPath,
-            tags = dbQuery { tags.map { it.toResponse() }},
+            tags = dbQuery { tags.map { it.toResponse() } },
             creator = dbQuery { creator.toDisplayResponse() },
             viewCount = viewCount,
             uploadDate = uploadDate.toString(),
-            rating = dbQuery { ratings.map { it.rating }.average() }.run { if (isNaN()) 0.0 else this }
+            rating = getRating()
         )
     }
 
     fun toDisplayResponse(): VideoDisplayResponse {
         return VideoDisplayResponse(
-            id = id.value,
-            title = title,
-            videoPath = videoPath
+            id = id.value, title = title, videoPath = videoPath
         )
+    }
+
+    fun getRating(): Double = transaction {
+        ratings.map { it.rating }.average().let { if (it.isNaN()) 0.0 else it }
     }
 }
 
@@ -73,7 +76,5 @@ data class VideoResponse(
 
 @Serializable
 data class VideoDisplayResponse(
-    val id: Int,
-    val title: String,
-    val videoPath: String
+    val id: Int, val title: String, val videoPath: String
 )

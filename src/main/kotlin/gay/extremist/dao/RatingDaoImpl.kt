@@ -47,18 +47,10 @@ class RatingDaoImpl : RatingDao {
             ?.value
     }
 
-    override suspend fun createOrUpdateRating(video: Video, account: Account, rating: Int): Int = dbQuery {
+    override suspend fun createOrUpdateRating(video: Video, account: Account, rating: Int): Unit = dbQuery {
         val id = getIdByVideoAndAccount(video, account)
-        val returnVal: Int
 
-        if (id == null){
-            createRating(video, account, rating)
-            returnVal = 0
-        } else {
-            updateRating(id, rating)
-            returnVal = 1
-        }
-        returnVal
+        if (id == null) createRating(video, account, rating) else updateRating(id, rating)
     }
 }
 

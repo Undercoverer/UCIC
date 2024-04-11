@@ -2,17 +2,16 @@ package gay.extremist.dao
 
 import gay.extremist.util.DatabaseFactory.dbQuery
 import gay.extremist.models.*
+import io.ktor.http.*
 import org.jetbrains.exposed.sql.SizedCollection
+import org.jetbrains.exposed.sql.VarCharColumnType
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import java.io.File
 
 
 class VideoDaoImpl : VideoDao {
     override suspend fun createVideo(
-        creator: Account,
-        videoPath: String,
-        title: String,
-        description: String,
-        tags: SizedCollection<Tag>
+        creator: Account, videoPath: String, title: String, description: String, tags: SizedCollection<Tag>
     ): Video = dbQuery {
         Video.new {
             this.creator = creator
@@ -40,7 +39,7 @@ class VideoDaoImpl : VideoDao {
         video != null
     }
 
-    override suspend fun updateVideoPath(id: Int, videoPath: String): Boolean = dbQuery{
+    override suspend fun updateVideoPath(id: Int, videoPath: String): Boolean = dbQuery {
         val video = Video.findById(id)
         video?.videoPath = videoPath
 
@@ -94,6 +93,24 @@ class VideoDaoImpl : VideoDao {
                 true
             }
         }
+    }
+
+    override suspend fun searchAndSortVideosByTitleFuzzy(title: String): List<Video> = dbQuery {
+        val conn = TransactionManager.current().connection
+        val query = "SELECT * FROM videos ORDER BY similarity(title, ?) DESC"
+        val statement = conn.prepareStatement(query, false).apply { set(1, title) }
+        val resultSet = statement.executeQuery()
+        val videos = mutableListOf<Video>()
+        while (resultSet.next()) Video.findById(resultSet.getInt("id")).let { videos.add(it!!) }
+        return@dbQuery videos
+    }
+
+    override suspend fun searchVideosByTags(tags: List<String>): List<Video> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun searchVideosByTitleFuzzyAndTags(title: String, tags: List<String>): List<Video> {
+        TODO("Not yet implemented")
     }
 
     override suspend fun getCommentsOnVideo(id: Int): List<Comment> = dbQuery {

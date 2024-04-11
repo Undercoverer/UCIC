@@ -12,5 +12,5 @@ interface RatingDao {
     suspend fun updateRating(id: Int, rating: Int): Boolean
     suspend fun deleteRating(id: Int): Boolean
     suspend fun getIdByVideoAndAccount(video: Video, account: Account): Int?
-    suspend fun createOrUpdateRating(video: Video, account: Account, rating: Int): Int
+    suspend fun createOrUpdateRating(video: Video, account: Account, rating: Int)
 }
