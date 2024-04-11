@@ -12,7 +12,7 @@ import io.ktor.util.pipeline.*
 fun Route.createAccountRoutes() = route("/accounts") {
     get { handleGetAllAccounts() }
 
-    route("/token") { get { handleGetToken() } }
+    route("/login") { post { handleAccountLogin() } }
 
     route("/register") { post { handleAccountRegistration() } }
 
@@ -116,17 +116,17 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleAccountRegistra
 }
 
 // 100% Done
-private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetToken() {
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleAccountLogin() {
     val loginAccount = call.receiveCatching<LoginAccount>().onFailureOrNull {
         call.respond(ErrorResponse.schema.apply { data = it.message })
     } ?: return
 
-    val token = accountDao.getToken(loginAccount.username, loginAccount.password)
+    val token = accountDao.getToken(loginAccount.email, loginAccount.password)
         ?: return call.respond(ErrorResponse.accountIncorrectCredentials)
 
-    val accountId = accountDao.getIdByUsername(loginAccount.username) ?: return
+    val accountId = accountDao.getIdByEmail(loginAccount.email) ?: return
 
-    call.respond(RegisteredAccount(accountId, token))
+    call.respond(RegisteredAccount(token, accountId))
 }
 
 // 100% Done

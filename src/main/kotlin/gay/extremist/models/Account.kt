@@ -15,9 +15,6 @@ object Accounts : IntIdTable() {
 
 }
 
-@Serializable
-data class AccountDisplayResponse(val id: Int, val username: String)
-
 class Account(id: EntityID<Int>) : Entity<Int>(id) {
     companion object : EntityClass<Int, Account>(Accounts)
 
@@ -38,7 +35,7 @@ class Account(id: EntityID<Int>) : Entity<Int>(id) {
 
     // Response Functions
     fun toResponse() = AccountResponse(id.value, username, email, password, token)
-    fun toRegisteredAccountResponse() = RegisteredAccount(id.value, token)
+    fun toRegisteredAccountResponse() = RegisteredAccount(token, id.value)
     fun toDisplayResponse() = AccountDisplayResponse(id.value, username)
 }
 
@@ -47,12 +44,15 @@ class Account(id: EntityID<Int>) : Entity<Int>(id) {
 data class RegistrationAccount(val username: String, val email: String, val password: String)
 
 @Serializable
-data class RegisteredAccount(val accountId: Int, val token: String)
+data class RegisteredAccount(val token: String, val accountId: Int)
 
 @Serializable
-data class LoginAccount(val username: String, val password: String)
+data class LoginAccount(val email: String, val password: String)
 
 @Serializable
 data class AccountResponse(
     val accountID: Int, val username: String, val email: String, val password: String, val token: String
 )
+
+@Serializable
+data class AccountDisplayResponse(val id: Int, val username: String)

@@ -1,11 +1,9 @@
 package gay.extremist.dao
 
-import gay.extremist.dao.DatabaseFactory.dbQuery
+import gay.extremist.util.DatabaseFactory.dbQuery
 import gay.extremist.models.*
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.SizedCollection
 import org.jetbrains.exposed.sql.or
-import java.security.MessageDigest
 import java.util.*
 
 
@@ -66,6 +64,10 @@ class AccountDaoImpl : AccountDao {
 
     override suspend fun getIdByUsername(username: String): Int? = dbQuery {
         Account.find { Accounts.username eq username }.firstOrNull()?.id?.value
+    }
+
+    override suspend fun getIdByEmail(email: String): Int? = dbQuery {
+        Account.find { Accounts.email eq email }.firstOrNull()?.id?.value
     }
 
     override suspend fun addFollowedAccount(id: Int, account: Account): Boolean = dbQuery {

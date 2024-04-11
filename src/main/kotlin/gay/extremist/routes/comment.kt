@@ -1,6 +1,6 @@
 package gay.extremist.routes
 
-import gay.extremist.dao.DatabaseFactory.dbQuery
+import gay.extremist.util.DatabaseFactory.dbQuery
 import gay.extremist.dao.accountDao
 import gay.extremist.dao.commentDao
 import gay.extremist.dao.videoDao

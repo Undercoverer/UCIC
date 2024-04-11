@@ -1,6 +1,6 @@
 package gay.extremist
 
-import gay.extremist.dao.DatabaseFactory
+import gay.extremist.util.DatabaseFactory
 import gay.extremist.plugins.configureHTTP
 import gay.extremist.plugins.configureRouting
 import gay.extremist.plugins.configureSecurity

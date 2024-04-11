@@ -1,4 +1,4 @@
-package gay.extremist.dao
+package gay.extremist.util
 
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.Database

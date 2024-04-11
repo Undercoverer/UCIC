@@ -4,7 +4,9 @@
       <settings>
         <option name="envFilePath" value="" />
         <option name="removeOrphansOnComposeDown" value="false" />
+        <option name="commandLineOptions" value="--build" />
         <option name="sourceFilePath" value="compose.yml" />
+        <option name="upForceRecreate" value="true" />
       </settings>
     </deployment>
     <method v="2">

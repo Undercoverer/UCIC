@@ -10,6 +10,7 @@ interface AccountDao {
     suspend fun updateAccount(id: Int, username: String, email: String, password: String): Boolean
     suspend fun deleteAccount(id: Int): Boolean
     suspend fun getToken(email: String, password: String): String?
+    suspend fun getIdByEmail(email: String): Int?
     suspend fun getIdByUsername(username: String): Int?
     suspend fun addFollowedAccount(id: Int, account: Account): Boolean
     suspend fun removeFollowedAccount(id: Int, account: Account): Boolean

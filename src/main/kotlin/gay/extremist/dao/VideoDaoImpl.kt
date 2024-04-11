@@ -1,6 +1,6 @@
 package gay.extremist.dao
 
-import gay.extremist.dao.DatabaseFactory.dbQuery
+import gay.extremist.util.DatabaseFactory.dbQuery
 import gay.extremist.models.*
 import org.jetbrains.exposed.sql.SizedCollection
 import java.io.File
