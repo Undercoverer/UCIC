@@ -1,5 +1,6 @@
 package gay.extremist.models
 
+import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -17,6 +18,11 @@ object Ratings: IntIdTable() {
 }
 
 class Rating(id: EntityID<Int>): Entity<Int>(id) {
+    fun toResponse() = RatingResponse(
+        id.value, video.toDisplayResponse(), account.toDisplayResponse(), rating
+    )
+
+
     companion object: EntityClass<Int,Rating> (Ratings)
 
     var video by Video referencedOn Ratings.videoID
@@ -24,3 +30,6 @@ class Rating(id: EntityID<Int>): Entity<Int>(id) {
     var rating by Ratings.rating
 
 }
+
+@Serializable
+data class RatingResponse(val id: Int, val videoDisplayResponse: VideoDisplayResponse, val account: AccountDisplayResponse, val rating: Int)

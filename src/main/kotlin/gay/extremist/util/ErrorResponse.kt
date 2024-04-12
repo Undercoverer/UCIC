@@ -12,45 +12,47 @@ data class ErrorResponse(
     var data: @Contextual Any? = null,
 ) {
     companion object {
-        fun headersNotProvided(missing: List<String>): ErrorResponse {
-            return ErrorResponse(
-                error = "headers",
-                message = "Headers not provided: $missing",
-                status = HttpStatusCode.BadRequest.value,
-            )
-        }
+        fun headersNotProvided(missing: List<String>) = ErrorResponse(
+            error = "headers",
+            message = "Headers not provided: $missing",
+            status = HttpStatusCode.BadRequest.value,
+        )
 
-        fun conversionError(value: String, type: String, error: String): Any {
-            return ErrorResponse(
-                error = "conversion",
-                message = "Could not convert \"$value\" to $type: $error",
-                status = HttpStatusCode.BadRequest.value,
-            )
-        }
+        fun conversionError(value: String, type: String, error: String) = ErrorResponse(
+            error = "conversion",
+            message = "Could not convert \"$value\" to $type: $error",
+            status = HttpStatusCode.BadRequest.value,
+        )
 
-        fun notProvided(s: String): Any {
-            return ErrorResponse(
-                error = s,
-                message = "${s} not provided",
-                status = HttpStatusCode.BadRequest.value,
-            )
-        }
+        fun notProvided(s: String) = ErrorResponse(
+            error = s,
+            message = "$s not provided",
+            status = HttpStatusCode.BadRequest.value,
+        )
 
-        fun notFound(s: String): ErrorResponse {
-            return ErrorResponse(
-                error = s.lowercase(),
-                message = "$s not found",
-                status = HttpStatusCode.NotFound.value,
-            )
-        }
+        fun notFound(s: String) = ErrorResponse(
+            error = s.lowercase(),
+            message = "$s not found",
+            status = HttpStatusCode.NotFound.value,
+        )
 
-        fun notOwnedByAccount(s: String): ErrorResponse {
-            return ErrorResponse(
-                error = s.lowercase(),
-                message = "$s not owned by account",
-                status = HttpStatusCode.Forbidden.value,
-            )
-        }
+        fun notOwnedByAccount(s: String) = ErrorResponse(
+            error = s.lowercase(),
+            message = "$s not owned by account",
+            status = HttpStatusCode.Forbidden.value,
+        )
+
+        fun parametersNotProvided(missing: List<String>) = ErrorResponse(
+            error = "parameters",
+            message = "Parameters not provided: $missing",
+            status = HttpStatusCode.BadRequest.value,
+        )
+
+        fun alreadyExists(s: String) = ErrorResponse(
+            error = s.lowercase(),
+            message = "$s already exists",
+            status = HttpStatusCode.Conflict.value,
+        )
 
         val notInPlaylist = ErrorResponse(
             error = "playlist",

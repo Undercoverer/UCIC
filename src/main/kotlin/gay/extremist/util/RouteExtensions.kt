@@ -20,6 +20,19 @@ fun PipelineContext<Unit, ApplicationCall>.optionalHeaders(vararg headers: Strin
     return headers.associateWithNullable { request.headers[it] }
 }
 
+suspend fun PipelineContext<Unit, ApplicationCall>.requiredQueryParameters(vararg parameters: String): Map<String, String>? =
+    with(call) {
+        val missing = parameters.filter { request.queryParameters[it] == null }
+        if (missing.isNotEmpty()) respond(ErrorResponse.parametersNotProvided(missing)).also { return null }
+
+        return parameters.associateWith { request.queryParameters[it]!! }
+    }
+
+fun PipelineContext<Unit, ApplicationCall>.optionalQueryParameters(vararg parameters: String): Map<String, String?> = with(call) {
+    return parameters.associateWithNullable { request.queryParameters[it] }
+}
+
+
 suspend inline fun <reified T> PipelineContext<Unit, ApplicationCall>.convert(
     value: String?, converter: (String) -> T
 ): T? {
