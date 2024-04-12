@@ -1,6 +1,7 @@
 package gay.extremist.routes
 
 import gay.extremist.dao.tagDao
+import gay.extremist.models.toCategorizedResponse
 import gay.extremist.util.ErrorResponse
 import gay.extremist.util.idParameter
 import gay.extremist.util.requiredQueryParameters
@@ -25,7 +26,7 @@ fun Route.createTagRoutes() = route("/tags") {
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetPresetTags() {
     val tags = tagDao.getPresetTags()
-    call.respond(tags.map { it.toResponse() })
+    call.respond(tags.toCategorizedResponse())
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleFindTagsBySubstring()  {
