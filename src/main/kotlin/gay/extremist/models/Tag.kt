@@ -26,8 +26,31 @@ class Tag(id: EntityID<Int>) : Entity<Int>(id) {
     fun toDisplayResponse() = TagDisplayResponse(id.value, tag)
 }
 
+fun List<Tag>.toCategorizedResponse(): TagCategorizedResponse {
+    return TagCategorizedResponse (
+        this.filter {
+            it.category != null
+        }.groupBy {
+            it.category
+        }.map { (category, tags) ->
+            Category(
+                category!!,
+                tags.map{ it.toDisplayResponse() }
+            )
+        }
+    )
+
+
+}
+
 @Serializable
 data class TagDisplayResponse(val id: Int, val tag: String)
 
 @Serializable
 data class TagResponse(val id: Int, val tag: String, val category: String?, val isPreset: Boolean)
+
+@Serializable
+data class Category(val category: String, val tags:List<TagDisplayResponse>)
+
+@Serializable
+data class TagCategorizedResponse(val categories: List<Category>)
