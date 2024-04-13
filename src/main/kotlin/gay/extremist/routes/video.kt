@@ -42,11 +42,15 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleVideoSearch() {
     val title = queryParameters["title"] ?: ""
     val sortBy = queryParameters["sortBy"] ?: "alphabetic"
     val order = queryParameters["order"] ?: "desc"
-    val videos = if (sortBy == "similarity") {
-        videoDao.searchAndSortVideosByTitleFuzzy(title)
+
+    val videos = if (tags.isEmpty()) {
+        if (sortBy == "similarity") {
+            videoDao.searchAndSortVideosByTitleFuzzy(title)
+        } else {
+            videoDao.searchAndSortVideosByTitleFuzzy(title).sortBy(SortMethod.fromString(sortBy), order != "desc")
+        }
     } else {
-        videoDao.searchVideosByTitleFuzzyAndTags(title, tags)
-            .sortBy(SortMethod.fromString(sortBy), order != "desc")
+        videoDao.searchVideosByTitleFuzzyAndTags(title, tags).sortBy(SortMethod.fromString(sortBy), order != "desc")
     }
 
     call.respond(videos.map(Video::toDisplayResponse))
