@@ -21,6 +21,10 @@ fun Route.createAccountRoutes() = route("/accounts") {
         delete { handleDeleteAccount() }
         post { call.respond(HttpStatusCode.NotImplemented) }
 
+        route("/creator") {
+            get { handleGetDisplayAccount() }
+        }
+
         route("/videos") {
             get { handleGetAccountVideos() }
         }
@@ -101,6 +105,13 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetAccount() {
     val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
     if (account.token != token) return call.respond(ErrorResponse.accountTokenInvalid)
     call.respond(account.toResponse())
+}
+
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetDisplayAccount() {
+    val accountId = idParameter() ?: return
+
+    val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
+    call.respond(account.toDisplayResponse())
 }
 
 // 100% Done
