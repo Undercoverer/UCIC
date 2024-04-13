@@ -2,11 +2,10 @@ package gay.extremist.routes
 
 import gay.extremist.BASE_VIDEO_STORAGE_PATH
 import gay.extremist.TMP_VIDEO_STORAGE
-import gay.extremist.dao.accountDao
-import gay.extremist.dao.tagDao
-import gay.extremist.dao.videoDao
+import gay.extremist.dao.*
 import gay.extremist.util.ErrorResponse
 import gay.extremist.models.Tag
+import gay.extremist.models.Video
 import gay.extremist.util.*
 import io.ktor.http.*
 import io.ktor.http.content.*
@@ -25,28 +24,76 @@ import java.io.File
 fun Route.createVideoRoutes() = route("/videos") {
     route("/{id}") {
         get { handleGetVideo() }
-        delete { handleDeleteVideo() } //        TODO UPDATE VIDEO ENDPOINT
-        post { handleUpdateVideo() }
+        delete { handleDeleteVideo() }
+        post { handleAddTagsToVideo() }
+        post { handleRemoveTagsFromVideo() }
+    }
+
+    route("/search"){
+        get { handleVideoSearch() }
     }
 
     post { handleUploadVideo() }
-
-    //    videoDao.addTagsToVideo()
-    //    videoDao.removeTagsFromVideo()
-    //    videoDao.getCommentsOnVideo()
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.handleUpdateVideo() {
+suspend fun PipelineContext<Unit, ApplicationCall>.handleVideoSearch() {
+    val queryParameters = optionalQueryParameters("tags", "title", "sortBy", "order")
+    val tags = queryParameters["tags"]?.split(",") ?: emptyList()
+    val title = queryParameters["title"] ?: ""
+    val sortBy = queryParameters["sortBy"] ?: "alphabetic"
+    val order = queryParameters["order"] ?: "desc"
+    val videos = if (sortBy == "similarity") {
+        videoDao.searchAndSortVideosByTitleFuzzy(title)
+    } else {
+        videoDao.searchVideosByTitleFuzzyAndTags(title, tags)
+            .sortBy(SortMethod.fromString(sortBy), order != "desc")
+    }
+
+    call.respond(videos.map(Video::toDisplayResponse))
+}
+
+suspend fun PipelineContext<Unit, ApplicationCall>.handleAddTagsToVideo() {
     val headers = requiredHeaders(headerAccountId, headerToken) ?: return
     val accountId = idParameter() ?: return
-
     val token = headers[headerToken]
-    val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
 
+    val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
     if (account.token != token) return call.respond(ErrorResponse.accountTokenInvalid)
 
-    // TODO IMPLEMENT
-    // Recieve some json with the video details.
+    val videoId = convert(call.parameters["id"], String::toInt) ?: return
+    val video = videoDao.readVideo(videoId) ?: return call.respond(ErrorResponse.notFound("Video"))
+    if (video.creator.id.value != accountId) return call.respond(ErrorResponse.notOwnedByAccount("Video"))
+
+    val receiveTags = call.receive<Array<String>>()
+
+    val tags = receiveTags.map {
+        tagDao.findTagByName(it) ?: return call.respond(ErrorResponse.notFound("Tag"))
+    }
+    video.tags = SizedCollection(tags)
+
+    call.respond(HttpStatusCode.OK)
+}
+
+suspend fun PipelineContext<Unit, ApplicationCall>.handleRemoveTagsFromVideo() {
+    val headers = requiredHeaders(headerAccountId, headerToken) ?: return
+    val accountId = idParameter() ?: return
+    val token = headers[headerToken]
+
+    val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
+    if (account.token != token) return call.respond(ErrorResponse.accountTokenInvalid)
+
+    val videoId = convert(call.parameters["id"], String::toInt) ?: return
+    val video = videoDao.readVideo(videoId) ?: return call.respond(ErrorResponse.notFound("Video"))
+    if (video.creator.id.value != accountId) return call.respond(ErrorResponse.notOwnedByAccount("Video"))
+
+    val receiveTags = call.receive<Array<String>>()
+
+    val tags = receiveTags.map {
+        tagDao.findTagByName(it) ?: return call.respond(ErrorResponse.notFound("Tag"))
+    }
+    video.tags = SizedCollection(tags)
+
+    call.respond(HttpStatusCode.OK)
 }
 
 suspend fun PipelineContext<Unit, ApplicationCall>.handleUploadVideo() {
@@ -155,8 +202,6 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteVideo() = with(ca
     respond(HttpStatusCode.NoContent)
 }
 
-
-// 100% Done
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetVideo() = with(call) {
     val videoId = idParameter() ?: return
     val video = videoDao.readVideo(videoId) ?: return respond(ErrorResponse.notFound("Video"))
@@ -167,7 +212,6 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetVideo() = wi
 }
 
 
-// 100% Done
 fun Application.staticRoutes() = routing {
     install(PartialContent)
     staticFiles("/static/videos", File(BASE_VIDEO_STORAGE_PATH))

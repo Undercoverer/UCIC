@@ -2,9 +2,7 @@ package gay.extremist.dao
 
 import gay.extremist.util.DatabaseFactory.dbQuery
 import gay.extremist.models.*
-import io.ktor.http.*
 import org.jetbrains.exposed.sql.SizedCollection
-import org.jetbrains.exposed.sql.VarCharColumnType
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import java.io.File
 
@@ -105,13 +103,21 @@ class VideoDaoImpl : VideoDao {
         return@dbQuery videos
     }
 
-    override suspend fun searchVideosByTags(tags: List<String>): List<Video> {
-        TODO("Not yet implemented")
+
+    override suspend fun searchVideosByTitleFuzzyAndTags(title: String, tags: List<String>): List<Video> = dbQuery {
+        val conn = TransactionManager.current().connection
+        val query = "SELECT * FROM videos v INNER JOIN tag_labels_video tlv ON v.id = tlv.video_id INNER JOIN tags t ON tlv.tag_id = t.id WHERE similarity(v.title, ?) > 0.1 AND t.tag IN (?) ORDER BY similarity(v.title, ?) DESC"
+        val statement = conn.prepareStatement(query, false).apply {
+            set(1, title)
+            set(2, tags.joinToString(","))
+            set(3, title)
+        }
+        val resultSet = statement.executeQuery()
+        val videos = mutableListOf<Video>()
+        while (resultSet.next()) Video.findById(resultSet.getInt("id")).let { videos.add(it!!) }
+        return@dbQuery videos
     }
 
-    override suspend fun searchVideosByTitleFuzzyAndTags(title: String, tags: List<String>): List<Video> {
-        TODO("Not yet implemented")
-    }
 
     override suspend fun getCommentsOnVideo(id: Int): List<Comment> = dbQuery {
         readVideo(id)?.comments?.toList() ?: emptyList()
