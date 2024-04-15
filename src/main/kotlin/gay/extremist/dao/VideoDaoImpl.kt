@@ -95,7 +95,8 @@ class VideoDaoImpl : VideoDao {
 
     override suspend fun searchAndSortVideosByTitleFuzzy(title: String): List<Video> = dbQuery {
         val conn = TransactionManager.current().connection
-        val query = "SELECT * FROM videos ORDER BY similarity(title, ?) DESC"
+//        val query = "SELECT * FROM videos ORDER BY similarity(title, ?) DESC"
+        val query = "SELECT * FROM videos WHERE similarity(title, ?) > 0.5 ORDER BY similarity(title, ?) DESC"
         val statement = conn.prepareStatement(query, false).apply { set(1, title) }
         val resultSet = statement.executeQuery()
         val videos = mutableListOf<Video>()
@@ -103,10 +104,9 @@ class VideoDaoImpl : VideoDao {
         return@dbQuery videos
     }
 
-
     override suspend fun searchVideosByTitleFuzzyAndTags(title: String, tags: List<String>): List<Video> = dbQuery {
         val conn = TransactionManager.current().connection
-        val query = "SELECT * FROM videos v INNER JOIN tag_labels_video tlv ON v.id = tlv.video_id INNER JOIN tags t ON tlv.tag_id = t.id WHERE similarity(v.title, ?) > 0.1 AND t.tag IN (?) ORDER BY similarity(v.title, ?) DESC"
+        val query = "SELECT * FROM videos v INNER JOIN tag_labels_video tlv ON v.id = tlv.video_id INNER JOIN tags t ON tlv.tag_id = t.id WHERE similarity(v.title, ?) > 0.5 AND t.tag IN (?) ORDER BY similarity(v.title, ?) DESC"
         val statement = conn.prepareStatement(query, false).apply {
             set(1, title)
             set(2, tags.joinToString(","))

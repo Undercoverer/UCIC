@@ -36,6 +36,10 @@ object DatabaseFactory {
                 Tags,
                 TagLabelsVideo
             )
+
+            exec("CREATE EXTENSION IF NOT EXISTS pg_trgm;")
+            exec("CREATE INDEX IF NOT EXISTS video_title_gin_idx ON videos USING GIN(title gin_trgm_ops);")
+            exec("CREATE INDEX IF NOT EXISTS account_username_gin_idx ON accounts USING GIN(username gin_trgm_ops);")
         }
     }
     suspend fun <T> dbQuery(block: suspend () -> T): T =

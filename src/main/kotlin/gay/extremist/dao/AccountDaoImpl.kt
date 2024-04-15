@@ -2,8 +2,9 @@ package gay.extremist.dao
 
 import gay.extremist.util.DatabaseFactory.dbQuery
 import gay.extremist.models.*
-import org.jetbrains.exposed.sql.SizedCollection
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.or
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import java.util.*
 
 
@@ -71,14 +72,14 @@ class AccountDaoImpl : AccountDao {
     }
 
     override suspend fun addFollowedAccount(id: Int, account: Account): Boolean = dbQuery {
-        val follower = Account.findById(id)
-        val followedAccounts = follower?.followedAccounts
+        val follower = Account.findById(id) ?: return@dbQuery false
+        val followedAccounts = follower.followedAccounts
 
-        try {
-            follower?.followedAccounts = SizedCollection(followedAccounts!! + account)
-            true
-        } catch (e: NullPointerException) {
+        return@dbQuery if (followedAccounts.contains(account)) {
             false
+        } else {
+            follower.followedAccounts = SizedCollection(followedAccounts + account)
+            true
         }
     }
 
@@ -88,6 +89,22 @@ class AccountDaoImpl : AccountDao {
 
     override suspend fun getFollowedAccounts(id: Int): List<Account> = dbQuery {
         Account.findById(id)?.followedAccounts?.toList() ?: emptyList()
+    }
+
+    override suspend fun searchAccounts(username: String): List<Account> {
+        return Account.find {
+            Accounts.username like "%$username%"
+        }.toList()
+    }
+
+    override suspend fun searchAccountsFuzzy(username: String): List<Account> = dbQuery {
+        val conn = TransactionManager.current().connection
+        val query = "SELECT * FROM accounts WHERE similarity(username, ?) > 0.5 ORDER BY similarity(username, ?) DESC"
+        val statement = conn.prepareStatement(query, false).apply { set(1, username) }
+        val resultSet = statement.executeQuery()
+        val videos = mutableListOf<Account>()
+        while (resultSet.next()) Account.findById(resultSet.getInt("id")).let { videos.add(it!!) }
+        return@dbQuery videos
     }
 
     override suspend fun removeFollowedAccount(id: Int, account: Account): Boolean = dbQuery {
@@ -129,3 +146,13 @@ class AccountDaoImpl : AccountDao {
 }
 
 val accountDao: AccountDao = AccountDaoImpl()
+
+// Create distance operator '<->' (procedure = similarity_dist, leftarg = text, rightarg = text, commutator = '<-
+// Returns the “distance” between the arguments, that is one minus the similarity() value.
+public infix fun Expression<String>.distance(op: Expression<String>): Op<Double> {
+    return object : Op<Double>() {
+        override fun toQueryBuilder(queryBuilder: QueryBuilder) = queryBuilder {
+            append("%")
+        }
+    }
+}

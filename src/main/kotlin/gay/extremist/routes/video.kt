@@ -40,7 +40,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleVideoSearch() {
     val queryParameters = optionalQueryParameters("tags", "title", "sortBy", "order")
     val tags = queryParameters["tags"]?.split(",") ?: emptyList()
     val title = queryParameters["title"] ?: ""
-    val sortBy = queryParameters["sortBy"] ?: "alphabetic"
+    val sortBy = queryParameters["sortBy"] ?: "similarity"
     val order = queryParameters["order"] ?: "desc"
 
     val videos = if (tags.isEmpty()) {
@@ -185,25 +185,25 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleUploadVideo() {
     }
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteVideo() = with(call) {
+suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteVideo() {
     val headers = requiredHeaders(headerAccountId, headerToken) ?: return
 
     val videoId = idParameter() ?: return
-    val video = videoDao.readVideo(videoId) ?: return respond(ErrorResponse.notFound("Video"))
+    val video = videoDao.readVideo(videoId) ?: return call.respond(ErrorResponse.notFound("Video"))
 
     val accountId = convert(headers[headerAccountId], String::toInt) ?: return
-    val account = accountDao.readAccount(accountId) ?: return respond(ErrorResponse.notFound("Account"))
+    val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
 
     val token = headers[headerToken] ?: return
 
     if (transaction { account.id.value != video.creator.id.value }) {
-        return respond(ErrorResponse.notOwnedByAccount("Video"))
+        return call.respond(ErrorResponse.notOwnedByAccount("Video"))
     }
-    if ((account.token != token)) return respond(ErrorResponse.accountTokenInvalid)
-    if (File("$BASE_VIDEO_STORAGE_PATH/${video.id.value}").deleteRecursively()) return respond(ErrorResponse.videoDeleteFailed)
+    if ((account.token != token)) return call.respond(ErrorResponse.accountTokenInvalid)
+    if (File("$BASE_VIDEO_STORAGE_PATH/${video.id.value}").deleteRecursively()) return call.respond(ErrorResponse.videoDeleteFailed)
 
     videoDao.deleteVideo(videoId)
-    respond(HttpStatusCode.NoContent)
+    call.respond(HttpStatusCode.NoContent)
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetVideo() = with(call) {
