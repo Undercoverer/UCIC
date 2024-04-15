@@ -34,10 +34,46 @@ fun Route.createAccountRoutes() = route("/accounts") {
         route("/tags") {
             get { handleGetFollowedTags() }
         }
-        route("/following"){
-            get { handleGetFollowedAccounts()}
+        route("/following") {
+            get { handleGetFollowedAccounts() }
+        }
+        route("/follow") {
+            post { handleFollowAccount() }
         }
     }
+
+    route("/search") {
+        get { handleSearchAccounts() }
+    }
+}
+
+// 100% Done
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleFollowAccount() {
+    val headers = requiredHeaders(headerToken, headerAccountId) ?: return
+    val id = idParameter() ?: return
+    val otherAccountId = convert(headers[headerAccountId], String::toInt) ?: return
+    val token = headers[headerToken] ?: return
+
+    val account = accountDao.readAccount(id) ?: return call.respond(ErrorResponse.notFound("Account"))
+    if (account.token != token) return call.respond(ErrorResponse.accountTokenInvalid)
+
+    val otherAccount = accountDao.readAccount(id) ?: return call.respond(ErrorResponse.notFound("Account"))
+
+    if (accountDao.addFollowedAccount(id, otherAccount)) {
+        call.respond("$id followed $otherAccountId successfully")
+    } else {
+        call.respond(ErrorResponse.alreadyExists("Account"))
+    }
+}
+
+// 100% Done
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleSearchAccounts() {
+    val queryParameters = requiredQueryParameters("q") ?: return
+    val optionalQueryParameters = optionalQueryParameters("fuzzy")
+    val fuzzy = optionalQueryParameters["fuzzy"]?.toBoolean() ?: false
+    val query = queryParameters["q"] ?: return call.respond(ErrorResponse.notProvided("Query"))
+    val accounts = if (fuzzy) accountDao.searchAccountsFuzzy(query) else accountDao.searchAccounts(query)
+    call.respond(accounts.map(Account::toDisplayResponse))
 }
 
 // 100% Done

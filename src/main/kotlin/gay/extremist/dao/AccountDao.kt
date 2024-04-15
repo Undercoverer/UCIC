@@ -20,4 +20,6 @@ interface AccountDao {
     suspend fun getPlaylistsFromAccount(accountId: Int): List<Playlist>
     suspend fun getFollowedTags(id: Int): List<Tag>
     suspend fun getFollowedAccounts(id: Int): List<Account>
+    suspend fun searchAccounts(username: String): List<Account>
+    suspend fun searchAccountsFuzzy(username: String): List<Account>
 }

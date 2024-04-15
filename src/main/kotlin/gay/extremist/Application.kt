@@ -3,7 +3,6 @@ package gay.extremist
 import gay.extremist.util.DatabaseFactory
 import gay.extremist.plugins.configureHTTP
 import gay.extremist.plugins.configureRouting
-import gay.extremist.plugins.configureSecurity
 import gay.extremist.plugins.configureSerialization
 import gay.extremist.routes.staticRoutes
 import gay.extremist.util.*
@@ -17,7 +16,6 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
     DatabaseFactory.init()
-    configureSecurity()
     configureHTTP()
     configureSerialization()
     configureRouting()
