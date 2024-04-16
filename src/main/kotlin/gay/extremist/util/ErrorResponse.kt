@@ -65,7 +65,6 @@ data class ErrorResponse(
             message = "$s not followed",
             status = HttpStatusCode.NotFound.value
         )
-
         val notInPlaylist = ErrorResponse(
             error = "playlist",
             message = "Video not in playlist",

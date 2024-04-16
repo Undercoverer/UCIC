@@ -40,6 +40,10 @@ fun Route.createAccountRoutes() = route("/accounts") {
         route("/follow") {
             post { handleFollowAccount() }
         }
+        route("/unfollow") {
+            post { handleUnfollowAccount() }
+        }
+
         route("/recommended-videos") {
             get { handleGetRecommendedVideos() }
         }
@@ -85,19 +89,38 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetRecommendedV
 // 100% Done
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleFollowAccount() {
     val headers = requiredHeaders(headerToken, headerAccountId) ?: return
-    val followerID = convert(headers[headerAccountId], String::toInt) ?: return
-    val creatorID = idParameter() ?: return
+    val yourAccountId = convert(headers[headerAccountId], String::toInt) ?: return
+    val theirAccountId = idParameter() ?: return
     val token = headers[headerToken] ?: return
 
-    val follower = accountDao.readAccount(followerID) ?: return call.respond(ErrorResponse.notFound("Account"))
+    val follower = accountDao.readAccount(yourAccountId) ?: return call.respond(ErrorResponse.notFound("Account"))
     if (follower.token != token) return call.respond(ErrorResponse.accountTokenInvalid)
 
-    val creator = accountDao.readAccount(creatorID) ?: return call.respond(ErrorResponse.notFound("Account"))
+    val creator = accountDao.readAccount(theirAccountId) ?: return call.respond(ErrorResponse.notFound("Account"))
 
-    if (accountDao.addFollowedAccount(followerID, creator)) {
-        call.respond("$followerID followed $creatorID successfully")
+    if (accountDao.addFollowedAccount(yourAccountId, creator)) {
+        call.respond("$yourAccountId followed $theirAccountId successfully")
     } else {
         call.respond(ErrorResponse.alreadyExists("Account"))
+    }
+}
+
+// 100% Done
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleUnfollowAccount() {
+    val headers = requiredHeaders(headerToken, headerAccountId) ?: return
+    val yourAccountId = convert(headers[headerAccountId], String::toInt) ?: return
+    val theirAccountId = idParameter() ?: return
+    val token = headers[headerToken] ?: return
+
+    val follower = accountDao.readAccount(yourAccountId) ?: return call.respond(ErrorResponse.notFound("Account"))
+    if (follower.token != token) return call.respond(ErrorResponse.accountTokenInvalid)
+
+    val creator = accountDao.readAccount(theirAccountId) ?: return call.respond(ErrorResponse.notFound("Account"))
+
+    if (accountDao.removeFollowedAccount(yourAccountId, creator)) {
+        call.respond("$yourAccountId unfollowed $theirAccountId successfully")
+    } else {
+        call.respond(ErrorResponse.notFollowed("Account"))
     }
 }
 

@@ -73,13 +73,13 @@ class AccountDaoImpl : AccountDao {
     }
 
     override suspend fun addFollowedAccount(id: Int, account: Account): Boolean = dbQuery {
-        val follower = Account.findById(id) ?: return@dbQuery false
-        val followedAccounts = follower.followedAccounts
+        val yourAccount = Account.findById(id) ?: return@dbQuery false
+        val yourFollowedAccounts = yourAccount.followedAccounts
 
-        return@dbQuery if (followedAccounts.contains(account)) {
+        return@dbQuery if (yourFollowedAccounts.contains(account)) {
             false
         } else {
-            follower.followedAccounts = SizedCollection(followedAccounts + account)
+            yourAccount.followedAccounts = SizedCollection(yourFollowedAccounts + account)
             true
         }
     }
@@ -137,18 +137,18 @@ class AccountDaoImpl : AccountDao {
         return videos.sortBy(SortMethod.DATE, false)
     }
 
+
     override suspend fun removeFollowedAccount(id: Int, account: Account): Boolean = dbQuery {
-        val follower = Account.findById(id)
-        val followedAccounts = follower?.followedAccounts
+        val yourAccount = Account.findById(id)
+        val yourFollowedAccounts = yourAccount?.followedAccounts
 
         try {
-            follower?.followedAccounts = SizedCollection(followedAccounts!! - account)
+            yourAccount?.followedAccounts = SizedCollection(yourFollowedAccounts!! - account)
             true
         } catch (e: NullPointerException) {
             false
         }
     }
-
     override suspend fun addFollowedTag(id: Int, tag: Tag): Boolean = dbQuery {
         val follower = Account.findById(id) ?: return@dbQuery false
         val followedAccounts = follower.followedTags
