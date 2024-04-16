@@ -41,8 +41,8 @@ object DatabaseFactory {
             exec("CREATE INDEX IF NOT EXISTS account_username_gin_idx ON accounts USING GIN(username gin_trgm_ops);")
         }
     }
-    suspend fun <T> dbQuery(block: suspend () -> T): T =
-        newSuspendedTransaction(Dispatchers.IO) { block() }
+suspend fun <T> dbQuery(block: suspend () -> T): T =
+    newSuspendedTransaction(Dispatchers.IO) { block() }
 }
 
 infix fun <T : String?> Expression<T>.similarity(expression: String): CustomFunction<Double> {

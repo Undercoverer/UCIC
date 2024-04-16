@@ -71,17 +71,17 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetRecommendedV
 // 100% Done
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleFollowAccount() {
     val headers = requiredHeaders(headerToken, headerAccountId) ?: return
-    val id = idParameter() ?: return
-    val otherAccountId = convert(headers[headerAccountId], String::toInt) ?: return
+    val followerID = convert(headers[headerAccountId], String::toInt) ?: return
+    val creatorID = idParameter() ?: return
     val token = headers[headerToken] ?: return
 
-    val account = accountDao.readAccount(id) ?: return call.respond(ErrorResponse.notFound("Account"))
-    if (account.token != token) return call.respond(ErrorResponse.accountTokenInvalid)
+    val follower = accountDao.readAccount(followerID) ?: return call.respond(ErrorResponse.notFound("Account"))
+    if (follower.token != token) return call.respond(ErrorResponse.accountTokenInvalid)
 
-    val otherAccount = accountDao.readAccount(id) ?: return call.respond(ErrorResponse.notFound("Account"))
+    val creator = accountDao.readAccount(creatorID) ?: return call.respond(ErrorResponse.notFound("Account"))
 
-    if (accountDao.addFollowedAccount(id, otherAccount)) {
-        call.respond("$id followed $otherAccountId successfully")
+    if (accountDao.addFollowedAccount(followerID, creator)) {
+        call.respond("$followerID followed $creatorID successfully")
     } else {
         call.respond(ErrorResponse.alreadyExists("Account"))
     }

@@ -52,7 +52,12 @@ class Video(id: EntityID<Int>) : Entity<Int>(id) {
 
     fun toDisplayResponse(): VideoDisplayResponse {
         return VideoDisplayResponse(
-            id = id.value, title = title, videoPath = videoPath
+            id = id.value,
+            title = title,
+            videoPath = videoPath,
+            creator = transaction { creator.toDisplayResponse()},
+            uploadDate = uploadDate.toString(),
+            viewCount = viewCount
         )
     }
 
@@ -76,5 +81,10 @@ data class VideoResponse(
 
 @Serializable
 data class VideoDisplayResponse(
-    val id: Int, val title: String, val videoPath: String
+    val id: Int,
+    val title: String,
+    val videoPath: String,
+    val creator: AccountDisplayResponse,
+    val viewCount: Int,
+    val uploadDate: String
 )

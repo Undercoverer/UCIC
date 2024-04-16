@@ -41,7 +41,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleFindTagsBySubst
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetVideosForTag() {
     val id = idParameter() ?: return
     val videos = tagDao.getVideosForTag(id)
-    call.respond(videos.map { it.toResponse() })
+    call.respond(videos.map { it.toDisplayResponse() })
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleFindTagByName() {
