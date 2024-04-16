@@ -18,16 +18,33 @@ object Ratings: IntIdTable() {
 }
 
 class Rating(id: EntityID<Int>): Entity<Int>(id) {
-    fun toResponse() = RatingResponse(
-        id.value, video.toDisplayResponse(), account.toDisplayResponse(), rating
-    )
-
 
     companion object: EntityClass<Int,Rating> (Ratings)
 
     var video by Video referencedOn Ratings.videoID
     var account by Account referencedOn Ratings.accountID
     var rating by Ratings.rating
+
+    fun toResponse() = RatingResponse(
+        id.value, video.toDisplayResponse(), account.toDisplayResponse(), rating
+    )
+
+    override fun equals(other: Any?): Boolean {
+        return when(other){
+            is Rating -> {
+                (this.video == other.video && this.account == other.account) || (this.id == other.id)
+            }
+            else -> {
+                false
+            }
+        }
+    }
+
+    override fun hashCode(): Int {
+        var result = video.hashCode()
+        result = 31 * result + account.hashCode()
+        return result
+    }
 
 }
 

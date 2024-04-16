@@ -127,26 +127,26 @@ class AccountDaoImpl : AccountDao {
         return@dbQuery videos.sortBy(SortMethod.DATE, false)
     }
 
-    override suspend fun getRecommendedVideosByFollowedAccounts(accountId: Int): List<Video> {
-        val account = Account.findById(accountId) ?: return emptyList()
+    override suspend fun getRecommendedVideosByFollowedAccounts(accountId: Int): List<Video> = dbQuery{
+        val account = Account.findById(accountId) ?: return@dbQuery emptyList()
         val accounts = account.followedAccounts
         val videos = mutableListOf<Video>()
         for (theAccount in accounts) {
             videos.addAll(theAccount.videos)
         }
-        return videos.sortBy(SortMethod.DATE, false)
+        return@dbQuery videos.sortBy(SortMethod.DATE, false)
     }
 
 
     override suspend fun removeFollowedAccount(id: Int, account: Account): Boolean = dbQuery {
-        val yourAccount = Account.findById(id)
-        val yourFollowedAccounts = yourAccount?.followedAccounts
+        val yourAccount = Account.findById(id) ?: return@dbQuery false
+        val yourFollowedAccounts = yourAccount.followedAccounts
 
         try {
-            yourAccount?.followedAccounts = SizedCollection(yourFollowedAccounts!! - account)
-            true
+            yourAccount.followedAccounts = SizedCollection(yourFollowedAccounts.filter { it != account })
+            return@dbQuery true
         } catch (e: NullPointerException) {
-            false
+            return@dbQuery false
         }
     }
     override suspend fun addFollowedTag(id: Int, tag: Tag): Boolean = dbQuery {
@@ -163,7 +163,7 @@ class AccountDaoImpl : AccountDao {
         val followedAccounts = follower.followedTags
 
         runCatching {
-            follower.followedTags = SizedCollection(followedAccounts - tag)
+            follower.followedTags = SizedCollection(followedAccounts.filter { it != tag })
         }.isSuccess
     }
 
