@@ -54,6 +54,18 @@ data class ErrorResponse(
             status = HttpStatusCode.Conflict.value,
         )
 
+        fun alreadyFollowed(s: String) = ErrorResponse(
+            error = s.lowercase().replace(Regex("\\s+"), "_"),
+            message = "$s already followed",
+            status = HttpStatusCode.Conflict.value
+        )
+
+        fun notFollowed(s: String) = ErrorResponse(
+            error = s.lowercase().replace(Regex("\\s+"), "_"),
+            message = "$s not followed",
+            status = HttpStatusCode.NotFound.value
+        )
+
         val notInPlaylist = ErrorResponse(
             error = "playlist",
             message = "Video not in playlist",

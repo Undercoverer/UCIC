@@ -19,7 +19,7 @@ fun Route.createAccountRoutes() = route("/accounts") {
     route("/{id}") {
         get { handleGetAccount() }
         delete { handleDeleteAccount() }
-        post { call.respond(HttpStatusCode.NotImplemented) }
+        post { handleUpdateAccount() }
 
         route("/creator") {
             get { handleGetDisplayAccount() }
@@ -49,6 +49,20 @@ fun Route.createAccountRoutes() = route("/accounts") {
         get { handleSearchAccounts() }
     }
 }
+
+// 100% Done
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleUpdateAccount() {
+    val account = call.receiveCatching<RegistrationAccount>().onFailureOrNull {
+        call.respond(ErrorResponse.schema.apply { data = it.message })
+    } ?: return
+
+    val originalAccountId = accountDao.getIdByUsername(account.username) ?: return call.respond(ErrorResponse.notFound("Account"))
+
+    val finalAccount = accountDao.updateAccount(originalAccountId, account.username, account.email, account.password) ?: return
+
+    call.respond(finalAccount.toRegisteredAccountResponse())
+}
+
 
 // 100% Done
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetRecommendedVideos() {

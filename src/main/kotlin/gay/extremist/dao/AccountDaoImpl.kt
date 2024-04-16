@@ -32,14 +32,15 @@ class AccountDaoImpl : AccountDao {
         Account.all().toList()
     }
 
-    override suspend fun updateAccount(id: Int, username: String, email: String, password: String): Boolean = dbQuery {
+    override suspend fun updateAccount(id: Int, username: String, email: String, password: String): Account? = dbQuery {
         when (val account = Account.findById(id)) {
-            null -> return@dbQuery false
+            null -> return@dbQuery null
             else -> {
                 account.username = username
                 account.email = email
                 account.password = password.hashCode().toString()
-                return@dbQuery true
+                account.token = UUID.nameUUIDFromBytes((username + password.hashCode().toString()).toByteArray()).toString()
+                return@dbQuery account
             }
         }
     }
