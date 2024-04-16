@@ -40,11 +40,32 @@ fun Route.createAccountRoutes() = route("/accounts") {
         route("/follow") {
             post { handleFollowAccount() }
         }
+        route("/recommended-videos") {
+            get { handleGetRecommendedVideos() }
+        }
     }
 
     route("/search") {
         get { handleSearchAccounts() }
     }
+}
+
+// 100% Done
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetRecommendedVideos() {
+    val accountId = idParameter() ?: return
+    val queryParameters = requiredQueryParameters("by")  ?: return
+    val headers = requiredHeaders(headerToken) ?: return
+    val account = accountDao.readAccount(accountId) ?: return call.respond(ErrorResponse.notFound("Account"))
+    if (account.token != headers[headerToken]) return call.respond(ErrorResponse.accountTokenInvalid)
+
+    val byMethod = queryParameters["by"] ?: return
+
+    val videos = when (byMethod) {
+        "tags" -> accountDao.getRecommendedVideosByFollowedTags(accountId)
+        "following" -> accountDao.getRecommendedVideosByFollowedAccounts(accountId)
+        else -> return call.respond(ErrorResponse.notProvided("By method"))
+    }
+    call.respond(videos.map(Video::toDisplayResponse))
 }
 
 // 100% Done

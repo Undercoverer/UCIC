@@ -25,19 +25,19 @@ data class ErrorResponse(
         )
 
         fun notProvided(s: String) = ErrorResponse(
-            error = s,
+            error = s.lowercase().replace(Regex("\\s+"), "_"),
             message = "$s not provided",
             status = HttpStatusCode.BadRequest.value,
         )
 
         fun notFound(s: String) = ErrorResponse(
-            error = s.lowercase(),
+            error = s.lowercase().replace(Regex("\\s+"), "_"),
             message = "$s not found",
             status = HttpStatusCode.NotFound.value,
         )
 
         fun notOwnedByAccount(s: String) = ErrorResponse(
-            error = s.lowercase(),
+            error = s.lowercase().replace(Regex("\\s+"), "_"),
             message = "$s not owned by account",
             status = HttpStatusCode.Forbidden.value,
         )
@@ -49,7 +49,7 @@ data class ErrorResponse(
         )
 
         fun alreadyExists(s: String) = ErrorResponse(
-            error = s.lowercase(),
+            error = s.lowercase().replace(Regex("\\s+"), "_"),
             message = "$s already exists",
             status = HttpStatusCode.Conflict.value,
         )

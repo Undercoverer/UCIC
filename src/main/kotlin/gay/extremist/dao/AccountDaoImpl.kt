@@ -114,6 +114,28 @@ class AccountDaoImpl : AccountDao {
         ).toList()
     }
 
+    override suspend fun getRecommendedVideosByFollowedTags(accountId: Int): List<Video> = dbQuery {
+        val account = Account.findById(accountId) ?: return@dbQuery emptyList()
+        val tags = account.followedTags
+        val videos = mutableListOf<Video>()
+
+        for (tag in tags) {
+            videos.addAll(tag.videos)
+        }
+
+        return@dbQuery videos.sortBy(SortMethod.DATE, false)
+    }
+
+    override suspend fun getRecommendedVideosByFollowedAccounts(accountId: Int): List<Video> {
+        val account = Account.findById(accountId) ?: return emptyList()
+        val accounts = account.followedAccounts
+        val videos = mutableListOf<Video>()
+        for (theAccount in accounts) {
+            videos.addAll(theAccount.videos)
+        }
+        return videos.sortBy(SortMethod.DATE, false)
+    }
+
     override suspend fun removeFollowedAccount(id: Int, account: Account): Boolean = dbQuery {
         val follower = Account.findById(id)
         val followedAccounts = follower?.followedAccounts

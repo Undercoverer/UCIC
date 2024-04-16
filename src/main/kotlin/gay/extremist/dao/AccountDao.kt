@@ -22,4 +22,6 @@ interface AccountDao {
     suspend fun getFollowedAccounts(id: Int): List<Account>
     suspend fun searchAccounts(username: String): List<Account>
     suspend fun searchAccountsFuzzy(username: String): List<Account>
+    suspend fun getRecommendedVideosByFollowedTags(accountId: Int): List<Video>
+    suspend fun getRecommendedVideosByFollowedAccounts(accountId: Int): List<Video>
 }
