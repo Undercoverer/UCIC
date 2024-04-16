@@ -6,6 +6,7 @@ import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.SizedIterable
 
 object Accounts : IntIdTable() {
     val username: Column<String> = varchar("username", 255).uniqueIndex()
@@ -37,6 +38,23 @@ class Account(id: EntityID<Int>) : Entity<Int>(id) {
     fun toResponse() = AccountResponse(id.value, username, email, password, token)
     fun toRegisteredAccountResponse() = RegisteredAccount(token, id.value)
     fun toDisplayResponse() = AccountDisplayResponse(id.value, username)
+
+    override fun equals(other: Any?): Boolean {
+        return when(other){
+            is Account -> {
+                this.id == other.id
+            }
+            else -> {
+                false
+            }
+        }
+    }
+
+    override fun hashCode(): Int {
+        var result = username.hashCode()
+        result = 31 * result + email.hashCode()
+        return result
+    }
 }
 
 

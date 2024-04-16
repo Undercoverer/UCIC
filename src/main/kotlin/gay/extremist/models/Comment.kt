@@ -39,6 +39,21 @@ class Comment(id: EntityID<Int>): Entity<Int>(id){
         video.toDisplayResponse(),
         comment
     )
+
+    override fun equals(other: Any?): Boolean {
+        return when(other){
+            is Comment -> {
+                this.id == other.id
+            }
+            else -> {
+                false
+            }
+        }
+    }
+
+    override fun hashCode(): Int {
+        return javaClass.hashCode()
+    }
 }
 
 @Serializable

@@ -23,9 +23,27 @@ class Playlist(id: EntityID<Int>) : Entity<Int>(id) {
     var videos by Video via PlaylistContainsVideo
 
     fun toDisplayResponse() = PlaylistDisplayResponse(id.value, name)
-    fun toResponse() =
-        PlaylistResponse(id.value, transaction { owner.id.value }, name, transaction { videos.map(Video::toDisplayResponse)})
+    fun toResponse() = PlaylistResponse(
+        id.value,
+        transaction { owner.id.value },
+        name,
+        transaction { videos.map(Video::toDisplayResponse)}
+    )
 
+    override fun equals(other: Any?): Boolean {
+        return when(other){
+            is Playlist -> {
+                this.id == other.id
+            }
+            else -> {
+                false
+            }
+        }
+    }
+
+    override fun hashCode(): Int {
+        return javaClass.hashCode()
+    }
 }
 
 @Serializable

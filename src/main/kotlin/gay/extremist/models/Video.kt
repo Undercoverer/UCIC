@@ -64,6 +64,22 @@ class Video(id: EntityID<Int>) : Entity<Int>(id) {
     fun getRating(): Double = transaction {
         ratings.map { it.rating }.average().let { if (it.isNaN()) 0.0 else it }
     }
+
+    override fun equals(other: Any?): Boolean {
+        return when(other){
+            is Video -> {
+                this.id == other.id
+            }
+            else -> {
+                false
+            }
+        }
+    }
+
+    override fun hashCode(): Int {
+        return javaClass.hashCode()
+    }
+
 }
 
 @Serializable

@@ -53,14 +53,14 @@ class PlaylistDaoImpl : PlaylistDao {
     }
 
     override suspend fun removeVideoFromPlaylist(id: Int, video: Video): Boolean = dbQuery {
-        val playlist = Playlist.findById(id)
-        val videoList = playlist?.videos
+        val playlist = Playlist.findById(id) ?: return@dbQuery false
+        val videoList = playlist.videos
 
         try {
-            playlist?.videos = SizedCollection(videoList!! - video)
-            true
+            playlist.videos = SizedCollection(videoList.filter{ it != video })
+            return@dbQuery true
         } catch (e: NullPointerException) {
-            false
+            return@dbQuery false
         }
     }
 }
