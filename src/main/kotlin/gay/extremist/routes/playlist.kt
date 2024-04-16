@@ -5,6 +5,7 @@ import gay.extremist.dao.playlistDao
 import gay.extremist.dao.videoDao
 import gay.extremist.util.ErrorResponse
 import gay.extremist.models.NewPlaylistData
+import gay.extremist.models.PlaylistDisplayResponse
 import gay.extremist.models.PlaylistResponse
 import gay.extremist.util.*
 import io.ktor.http.*
@@ -12,6 +13,7 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
+import org.jetbrains.exposed.sql.transactions.transaction
 
 // DONE
 fun Route.createPlaylistRoutes() = route("/playlists") {
@@ -54,7 +56,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleAddVideoToPlayl
     val video = videoDao.readVideo(videoId) ?: return call.respond(ErrorResponse.notFound("Video"))
 
     val playlist = playlistDao.readPlaylist(playlistId) ?: return call.respond(ErrorResponse.notFound("Playlist"))
-    if (playlist.videos.contains(video)) return call.respond(ErrorResponse.alreadyInPlaylist)
+    if (transaction {  playlist.videos.contains(video) }) return call.respond(ErrorResponse.alreadyInPlaylist)
 
 
     playlistDao.addVideoToPlaylist(playlistId, video)
@@ -91,7 +93,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handlePlaylistUpdate(
     val playlist = playlistDao.readPlaylist(playlistId) ?: return call.respond(ErrorResponse.notFound("Playlist"))
     if (playlist.owner.id != account.id) return call.respond(ErrorResponse.notOwnedByAccount("Playlist"))
 
-    playlistDao.updatePlaylist(playlist.id.value, playlistInfo.name, playlistInfo.description)
+    playlistDao.updatePlaylist(playlist.id.value, playlistInfo.name)
     call.respond(HttpStatusCode.OK, message = "Playlist Updated")
 }
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetPlaylist() {
@@ -111,10 +113,10 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handlePlaylistCreatio
     val playlistInfo = call.receiveCatching<NewPlaylistData>().onFailureOrNull {
         call.respond(ErrorResponse.schema.apply { data = it.message })
     } ?: return
-    val playlist = playlistDao.createPlaylist(account, playlistInfo.name, playlistInfo.description)
+    val playlist = playlistDao.createPlaylist(account, playlistInfo.name)
     call.respond(
-        PlaylistResponse(
-            playlist.id.value, playlist.owner.id.value, playlist.name, playlist.description, emptyList()
+        PlaylistDisplayResponse(
+            playlist.id.value, playlist.name
         )
     )
 }

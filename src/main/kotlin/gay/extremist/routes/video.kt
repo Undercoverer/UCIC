@@ -115,7 +115,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleUploadVideo() {
 
     var title = ""
     var videoDescription = ""
-    var tags = emptyArray<String>()
+    var tags = emptyList<String>()
     var originalFileName = ""
 
     val timestamp = System.currentTimeMillis()
@@ -125,7 +125,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleUploadVideo() {
             is PartData.FormItem -> when (it.name) {
                 "title" -> title = it.value
                 "description" -> videoDescription = it.value
-                "tags" -> tags = Json.decodeFromString<Array<String>>(it.value)
+                "tags[]" -> tags = tags + it.value
                 else -> {}
             }
 

@@ -7,11 +7,11 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.ReferenceOption
+import org.jetbrains.exposed.sql.transactions.transaction
 
 object Playlists : IntIdTable() {
     val ownerId: Column<EntityID<Int>> = reference("ownerID", Accounts, onDelete = ReferenceOption.CASCADE)
     val name: Column<String> = varchar("name", 255)
-    val description: Column<String> = varchar("description", 255)
 }
 
 class Playlist(id: EntityID<Int>) : Entity<Int>(id) {
@@ -20,12 +20,11 @@ class Playlist(id: EntityID<Int>) : Entity<Int>(id) {
     var owner by Account referencedOn Playlists.ownerId
 
     var name by Playlists.name
-    var description by Playlists.description
     var videos by Video via PlaylistContainsVideo
 
     fun toDisplayResponse() = PlaylistDisplayResponse(id.value, name)
     fun toResponse() =
-        PlaylistResponse(id.value, owner.id.value, name, description, videos.map(Video::toDisplayResponse))
+        PlaylistResponse(id.value, transaction { owner.id.value }, name, transaction { videos.map(Video::toDisplayResponse)})
 
 }
 
@@ -36,7 +35,7 @@ data class PlaylistDisplayResponse(
 
 @Serializable
 data class NewPlaylistData(
-    val name: String, val description: String
+    val name: String
 )
 
 @Serializable
@@ -44,6 +43,5 @@ data class PlaylistResponse(
     val id: Int,
     val owner: Int,
     val name: String,
-    val description: String,
     val videos: List<VideoDisplayResponse>
 )

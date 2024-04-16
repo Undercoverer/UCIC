@@ -7,12 +7,10 @@ import gay.extremist.models.Video
 import org.jetbrains.exposed.sql.SizedCollection
 
 class PlaylistDaoImpl : PlaylistDao {
-    override suspend fun createPlaylist(owner: Account, name: String, description: String): Playlist = dbQuery {
+    override suspend fun createPlaylist(owner: Account, name: String): Playlist = dbQuery {
         Playlist.new {
             this.owner = owner
             this.name = name
-            this.description = description
-            this.videos = SizedCollection()
         }
     }
 
@@ -24,10 +22,9 @@ class PlaylistDaoImpl : PlaylistDao {
         Playlist.all().toList()
     }
 
-    override suspend fun updatePlaylist(id: Int, name: String, description: String): Boolean = dbQuery {
+    override suspend fun updatePlaylist(id: Int, name: String): Boolean = dbQuery {
         val playlist = Playlist.findById(id)
         playlist?.name = name
-        playlist?.description = description
 
         playlist!= null
     }
