@@ -1,12 +1,11 @@
 package gay.extremist.routes
 
-import gay.extremist.util.DatabaseFactory.dbQuery
 import gay.extremist.dao.accountDao
 import gay.extremist.dao.commentDao
 import gay.extremist.dao.videoDao
-import gay.extremist.util.ErrorResponse
 import gay.extremist.models.Comment
 import gay.extremist.util.*
+import gay.extremist.util.DatabaseFactory.dbQuery
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -83,7 +82,9 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteComment() = with(
 
     commentDao.deleteComment(commentId)
 
-    respond(status = HttpStatusCode.Accepted, message = "Comment deleted")
+    respondText(status = HttpStatusCode.Accepted) {
+        "Comment deleted"
+    }
 }
 
 suspend fun PipelineContext<Unit, ApplicationCall>.handleUpdateComment() = with(call) {
@@ -102,7 +103,9 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleUpdateComment() = with(
     val commentText = receiveText()
     commentDao.updateComment(commentId, commentText)
 
-    respond(status = HttpStatusCode.Accepted, message = "Comment updated")
+    respondText(status = HttpStatusCode.Accepted) {
+        "Comment updated"
+    }
 }
 
 

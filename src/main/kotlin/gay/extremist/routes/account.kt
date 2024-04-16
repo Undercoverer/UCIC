@@ -99,7 +99,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleFollowAccount()
     val creator = accountDao.readAccount(theirAccountId) ?: return call.respond(ErrorResponse.notFound("Account"))
 
     if (accountDao.addFollowedAccount(yourAccountId, creator)) {
-        call.respond("$yourAccountId followed $theirAccountId successfully")
+        call.respondText("$yourAccountId followed $theirAccountId successfully")
     } else {
         call.respond(ErrorResponse.alreadyExists("Account"))
     }
@@ -118,7 +118,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleUnfollowAccount
     val creator = accountDao.readAccount(theirAccountId) ?: return call.respond(ErrorResponse.notFound("Account"))
 
     if (accountDao.removeFollowedAccount(yourAccountId, creator)) {
-        call.respond("$yourAccountId unfollowed $theirAccountId successfully")
+        call.respondText("$yourAccountId unfollowed $theirAccountId successfully")
     } else {
         call.respond(ErrorResponse.notFollowed("Account"))
     }

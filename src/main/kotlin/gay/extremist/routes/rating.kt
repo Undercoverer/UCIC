@@ -5,10 +5,8 @@ import io.ktor.server.routing.*
 import gay.extremist.dao.ratingDao
 import gay.extremist.dao.videoDao
 import gay.extremist.util.*
-import io.ktor.client.engine.*
 import io.ktor.http.*
 import io.ktor.server.application.*
-import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.util.pipeline.*
 
@@ -70,7 +68,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteRating() 
     if (headers[headerToken] != account.token) return call.respond(ErrorResponse.accountTokenInvalid)
     val rating = ratingDao.readRating(id) ?: return call.respond(ErrorResponse.notFound("Rating"))
     ratingDao.deleteRating(id)
-    call.respond(status = HttpStatusCode.NoContent, "Rating successfully deleted")
+    call.respondText(status = HttpStatusCode.NoContent) { "Rating successfully deleted" }
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetIdByVideoAndAccount() {
