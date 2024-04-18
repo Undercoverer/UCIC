@@ -157,7 +157,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetFollowedTags
     if (account.token != token) return call.respond(ErrorResponse.accountTokenInvalid)
 
     val tags = accountDao.getFollowedTags(accountId)
-    call.respond(tags.map(Tag::toDisplayResponse))
+    call.respond(tags.map(Tag::toResponse))
 }
 
 // 100% Done

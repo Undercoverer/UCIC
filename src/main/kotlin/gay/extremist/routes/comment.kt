@@ -34,7 +34,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleGetCommentsOnComment() 
 
 suspend fun PipelineContext<Unit, ApplicationCall>.handleGetComments() = with(call) {
     val video = videoDao.readVideo(idParameter() ?: return) ?: return respond(ErrorResponse.notFound("Video"))
-    respond(commentDao.getToplevelCommentsOnVideo(video.id.value).map(Comment::toResponse))
+    respond(commentDao.getToplevelCommentsOnVideo(video.id.value).map(Comment::toResponseNonrecursive))
 }
 
 suspend fun PipelineContext<Unit, ApplicationCall>.handleCreateComment() = with(call) {
@@ -64,7 +64,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleCreateComment() = with(
         commentDao.createComment(account, video, parentComment, commentText)
     }
 
-    respond(comment.toResponse())
+    respond(comment.toResponseNonrecursive())
 }
 
 suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteComment() = with(call) {

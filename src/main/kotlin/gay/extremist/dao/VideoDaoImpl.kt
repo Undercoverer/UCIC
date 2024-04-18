@@ -103,7 +103,7 @@ class VideoDaoImpl : VideoDao {
 //        return@dbQuery videos
         // TODO MAKE SURE THIS WORKS RIGHT
         val titleSimilarity = Videos.title similarity title
-        Video.find { titleSimilarity greater 0.5 }
+        Video.find { titleSimilarity greater 0.25 }
             .orderBy(titleSimilarity to SortOrder.DESC)
             .toList()
     }
@@ -123,7 +123,7 @@ class VideoDaoImpl : VideoDao {
         // TODO MAKE SURE THIS WORKS RIGHT (NO IDEA IF THIS ONE DOES AT ALL)
         val titleSimilarity = Videos.title similarity title
         (Videos innerJoin TagLabelsVideo innerJoin Tags)
-            .select { titleSimilarity greater 0.5 and Tags.tag.inList(tags) }
+            .select { titleSimilarity greater 0.25 and Tags.tag.inList(tags) }
             .orderBy(titleSimilarity to SortOrder.DESC)
             .map { Video.findById(it[Videos.id])!! }
 
