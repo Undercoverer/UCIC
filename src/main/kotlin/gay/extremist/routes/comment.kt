@@ -27,17 +27,17 @@ fun Route.createCommentRoutes() = route("/comments") {
 }
 
 
-suspend fun PipelineContext<Unit, ApplicationCall>.handleGetCommentsOnComment() = with(call) {
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetCommentsOnComment() = with(call) {
     val comment = commentDao.readComment(idParameter() ?: return) ?: return respond(ErrorResponse.notFound("Comment"))
     respond(commentDao.getCommentsOnComment(comment.id.value).map(Comment::toResponse))
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.handleGetComments() = with(call) {
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetComments() = with(call) {
     val video = videoDao.readVideo(idParameter() ?: return) ?: return respond(ErrorResponse.notFound("Video"))
     respond(commentDao.getToplevelCommentsOnVideo(video.id.value).map(Comment::toResponseNonrecursive))
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.handleCreateComment() = with(call) {
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleCreateComment() = with(call) {
     val headers = requiredHeaders(headerAccountId, headerToken) ?: return
     val optionalHeaders = optionalHeaders(headerParentCommentId)
 
@@ -67,7 +67,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleCreateComment() = with(
     respond(comment.toResponseNonrecursive())
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteComment() = with(call) {
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteComment() = with(call) {
     val headers = requiredHeaders(headerAccountId, headerToken) ?: return
     val commentId = idParameter() ?: return
 
@@ -87,7 +87,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteComment() = with(
     }
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.handleUpdateComment() = with(call) {
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleUpdateComment() = with(call) {
     val headers = requiredHeaders(headerAccountId, headerToken) ?: return
 
     val commentId = idParameter() ?: return

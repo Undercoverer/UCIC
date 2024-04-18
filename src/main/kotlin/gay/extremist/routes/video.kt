@@ -37,12 +37,12 @@ fun Route.createVideoRoutes() = route("/videos") {
     post { handleUploadVideo() }
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.handleGetGeneralVideos() {
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetGeneralVideos() {
     val videos = videoDao.readGeneralVideos()
     call.respond(videos.map(Video::toDisplayResponse))
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.handleVideoSearch() {
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleVideoSearch() {
     val queryParameters = optionalQueryParameters("tags", "title", "sortBy", "order")
     val tags = queryParameters["tags"]?.split(",") ?: emptyList()
     val title = queryParameters["title"] ?: ""
@@ -66,7 +66,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleVideoSearch() {
     call.respond(videos.map(Video::toDisplayResponse))
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.handleAddTagsToVideo() {
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleAddTagsToVideo() {
     val headers = requiredHeaders(headerAccountId, headerToken) ?: return
     val accountId = idParameter() ?: return
     val token = headers[headerToken]
@@ -88,7 +88,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleAddTagsToVideo() {
     call.respond(HttpStatusCode.OK)
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.handleRemoveTagsFromVideo() {
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleRemoveTagsFromVideo() {
     val headers = requiredHeaders(headerAccountId, headerToken) ?: return
     val accountId = idParameter() ?: return
     val token = headers[headerToken]
@@ -110,7 +110,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleRemoveTagsFromVideo() {
     call.respond(HttpStatusCode.OK)
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.handleUploadVideo() {
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleUploadVideo() {
     val headers = requiredHeaders(headerAccountId, headerToken) ?: return
     val accountId = convert(headers[headerAccountId], String::toInt) ?: return
 
@@ -195,7 +195,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleUploadVideo() {
     }
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteVideo() {
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteVideo() {
     val headers = requiredHeaders(headerAccountId, headerToken) ?: return
 
     val videoId = idParameter() ?: return
