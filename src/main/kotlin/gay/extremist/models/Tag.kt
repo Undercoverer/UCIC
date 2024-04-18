@@ -24,6 +24,21 @@ class Tag(id: EntityID<Int>) : Entity<Int>(id) {
 
     fun toResponse() = TagResponse(id.value, tag, category, isPreset)
     fun toDisplayResponse() = TagDisplayResponse(id.value, tag)
+
+    override fun equals(other: Any?): Boolean {
+        return when(other){
+            is Tag -> {
+                this.id == other.id
+            }
+            else -> {
+                false
+            }
+        }
+    }
+
+    override fun hashCode(): Int {
+        return tag.hashCode()
+    }
 }
 
 fun List<Tag>.toCategorizedResponse(): TagCategorizedResponse {
