@@ -25,6 +25,7 @@ interface VideoDao {
     suspend fun getCommentsOnVideo(id: Int): List<Comment>
     suspend fun searchVideosByTitleFuzzyAndTags(title: String, tags: List<String>): List<Video>
     suspend fun searchAndSortVideosByTitleFuzzy(title: String): List<Video>
+    suspend fun readGeneralVideos(): List<Video>
 }
 
 fun List<Video>.sortBy(sortMethod: SortMethod, reverse: Boolean): List<Video> = when (sortMethod){

@@ -1,10 +1,12 @@
 package gay.extremist.dao
 
-import gay.extremist.util.DatabaseFactory.dbQuery
 import gay.extremist.models.*
+import gay.extremist.util.DatabaseFactory.dbQuery
 import gay.extremist.util.similarity
 import org.jetbrains.exposed.sql.*
 import java.io.File
+import java.time.Clock
+import java.time.Duration
 
 
 class VideoDaoImpl : VideoDao {
@@ -59,6 +61,14 @@ class VideoDaoImpl : VideoDao {
         }
     }
 
+    override suspend fun readGeneralVideos(): List<Video> = dbQuery {
+        Video.find {
+            Videos.uploadDate greater java.time.LocalDateTime.from(
+                Clock.systemUTC().instant().minus(Duration.ofDays(7))
+            )
+        }.orderBy(Videos.viewCount to SortOrder.DESC).toList()
+    }
+
     override suspend fun addTagsToVideo(id: Int, tags: List<Tag>): Boolean = dbQuery {
         val video = Video.findById(id)
         val tagList = video?.tags
@@ -83,7 +93,7 @@ class VideoDaoImpl : VideoDao {
         }
     }
 
-    override suspend fun incrementViewCount(id: Int): Boolean = dbQuery{
+    override suspend fun incrementViewCount(id: Int): Boolean = dbQuery {
         return@dbQuery when (val video = Video.findById(id)) {
             null -> false
             else -> {
@@ -103,9 +113,7 @@ class VideoDaoImpl : VideoDao {
 //        return@dbQuery videos
         // TODO MAKE SURE THIS WORKS RIGHT
         val titleSimilarity = Videos.title similarity title
-        Video.find { titleSimilarity greater 0.5 }
-            .orderBy(titleSimilarity to SortOrder.DESC)
-            .toList()
+        Video.find { titleSimilarity greater 0.5 }.orderBy(titleSimilarity to SortOrder.DESC).toList()
     }
 
     override suspend fun searchVideosByTitleFuzzyAndTags(title: String, tags: List<String>): List<Video> = dbQuery {
@@ -122,10 +130,8 @@ class VideoDaoImpl : VideoDao {
 //        return@dbQuery videos
         // TODO MAKE SURE THIS WORKS RIGHT (NO IDEA IF THIS ONE DOES AT ALL)
         val titleSimilarity = Videos.title similarity title
-        (Videos innerJoin TagLabelsVideo innerJoin Tags)
-            .select { titleSimilarity greater 0.5 and Tags.tag.inList(tags) }
-            .orderBy(titleSimilarity to SortOrder.DESC)
-            .map { Video.findById(it[Videos.id])!! }
+        (Videos innerJoin TagLabelsVideo innerJoin Tags).select { titleSimilarity greater 0.5 and Tags.tag.inList(tags) }
+            .orderBy(titleSimilarity to SortOrder.DESC).map { Video.findById(it[Videos.id])!! }
 
     }
 

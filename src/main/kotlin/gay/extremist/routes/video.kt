@@ -16,7 +16,6 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
-import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.SizedCollection
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
@@ -33,7 +32,14 @@ fun Route.createVideoRoutes() = route("/videos") {
         get { handleVideoSearch() }
     }
 
+    get { handleGetGeneralVideos() }
+
     post { handleUploadVideo() }
+}
+
+suspend fun PipelineContext<Unit, ApplicationCall>.handleGetGeneralVideos() {
+    val videos = videoDao.readGeneralVideos()
+    call.respond(videos.map(Video::toDisplayResponse))
 }
 
 suspend fun PipelineContext<Unit, ApplicationCall>.handleVideoSearch() {
