@@ -130,29 +130,29 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleUploadVideo() {
 
     val timestamp = System.currentTimeMillis()
     val fileUploadLocation = "$TMP_VIDEO_STORAGE/${account.id}/$timestamp"
-    multiPartData.forEachPart {
-        when (it) {
-            is PartData.FormItem -> when (it.name) {
-                "title" -> title = it.value
-                "description" -> videoDescription = it.value
-                "tags[]" -> tags = tags + it.value
+    multiPartData.forEachPart { partData ->
+        when (partData) {
+            is PartData.FormItem -> when (partData.name) {
+                "title" -> title = partData.value
+                "description" -> videoDescription = partData.value
+                "tags[]" -> tags = tags + partData.value
                 else -> {}
             }
 
             is PartData.FileItem -> {
-                originalFileName = it.originalFileName!!
+                originalFileName = partData.originalFileName!!
 
                 File(fileUploadLocation).apply {
                     mkdirs()
                     File("$fileUploadLocation/$originalFileName").apply {
-                        appendBytes(it.streamProvider().readBytes())
+                        appendBytes(partData.streamProvider().readBytes())
                     }
                 }
             }
 
             else -> {}
         }
-        it.dispose()
+        partData.dispose()
     }
     if (originalFileName.isEmpty()) return call.respond(ErrorResponse.videoUploadFailed)
 
