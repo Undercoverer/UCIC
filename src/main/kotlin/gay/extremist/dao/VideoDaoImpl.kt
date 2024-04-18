@@ -7,6 +7,7 @@ import org.jetbrains.exposed.sql.*
 import java.io.File
 import java.time.Clock
 import java.time.Duration
+import java.time.LocalDateTime
 
 
 class VideoDaoImpl : VideoDao {
@@ -62,10 +63,9 @@ class VideoDaoImpl : VideoDao {
     }
 
     override suspend fun readGeneralVideos(): List<Video> = dbQuery {
+        val sevenDaysAgo = LocalDateTime.now().minusDays(7)
         Video.find {
-            Videos.uploadDate greater java.time.LocalDateTime.from(
-                Clock.systemUTC().instant().minus(Duration.ofDays(7))
-            )
+            Videos.uploadDate greaterEq  sevenDaysAgo
         }.orderBy(Videos.viewCount to SortOrder.DESC).toList()
     }
 
@@ -104,34 +104,18 @@ class VideoDaoImpl : VideoDao {
     }
 
     override suspend fun searchAndSortVideosByTitleFuzzy(title: String): List<Video> = dbQuery {
-//        val conn = TransactionManager.current().connection
-//        val query = "SELECT * FROM videos WHERE similarity(title, ?) > 0.5 ORDER BY similarity(title, ?) DESC"
-//        val statement = conn.prepareStatement(query, false).apply { set(1, title) }
-//        val resultSet = statement.executeQuery()
-//        val videos = mutableListOf<Video>()
-//        while (resultSet.next()) Video.findById(resultSet.getInt("id")).let { videos.add(it!!) }
-//        return@dbQuery videos
-        // TODO MAKE SURE THIS WORKS RIGHT
         val titleSimilarity = Videos.title similarity title
-        Video.find { titleSimilarity greater 0.5 }.orderBy(titleSimilarity to SortOrder.DESC).toList()
+        Video.find { titleSimilarity greater 0.25 }
+            .orderBy(titleSimilarity to SortOrder.DESC)
+            .toList()
     }
 
     override suspend fun searchVideosByTitleFuzzyAndTags(title: String, tags: List<String>): List<Video> = dbQuery {
-//        val conn = TransactionManager.current().connection
-//        val query = "SELECT * FROM videos v INNER JOIN tag_labels_video tlv ON v.id = tlv.video_id INNER JOIN tags t ON tlv.tag_id = t.id WHERE similarity(v.title, ?) > 0.5 AND t.tag IN (?) ORDER BY similarity(v.title, ?) DESC"
-//        val statement = conn.prepareStatement(query, false).apply {
-//            set(1, title)
-//            set(2, tags.joinToString(","))
-//            set(3, title)
-//        }
-//        val resultSet = statement.executeQuery()
-//        val videos = mutableListOf<Video>()
-//        while (resultSet.next()) Video.findById(resultSet.getInt("id")).let { videos.add(it!!) }
-//        return@dbQuery videos
-        // TODO MAKE SURE THIS WORKS RIGHT (NO IDEA IF THIS ONE DOES AT ALL)
         val titleSimilarity = Videos.title similarity title
-        (Videos innerJoin TagLabelsVideo innerJoin Tags).select { titleSimilarity greater 0.5 and Tags.tag.inList(tags) }
-            .orderBy(titleSimilarity to SortOrder.DESC).map { Video.findById(it[Videos.id])!! }
+        (Videos innerJoin TagLabelsVideo innerJoin Tags)
+            .select { titleSimilarity greater 0.25 and Tags.tag.inList(tags) }
+            .orderBy(titleSimilarity to SortOrder.DESC)
+            .map { Video.findById(it[Videos.id])!! }
 
     }
 

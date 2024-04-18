@@ -40,7 +40,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleRemoveVideoFrom
     val video = videoDao.readVideo(videoId) ?: return call.respond(ErrorResponse.notFound("Video"))
 
     val playlist = playlistDao.readPlaylist(playlistId) ?: return call.respond(ErrorResponse.notFound("Playlist"))
-    if (!playlist.videos.contains(video)) return call.respond(ErrorResponse.notInPlaylist)
+    if (!transaction { playlist.videos.contains(video)}) return call.respond(ErrorResponse.notInPlaylist)
 
     playlistDao.removeVideoFromPlaylist(playlistId, video)
     call.respond(HttpStatusCode.OK, message = "Video Removed from Playlist")
@@ -71,7 +71,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handlePlaylistDeletio
     if (account.token != token) return call.respond(ErrorResponse.accountTokenInvalid)
 
     val playlist = playlistDao.readPlaylist(playlistId) ?: return call.respond(ErrorResponse.notFound("Playlist"))
-    if (playlist.owner.id != account.id) return call.respond(ErrorResponse.notOwnedByAccount("Playlist"))
+    if (transaction { playlist.owner.id } != account.id) return call.respond(ErrorResponse.notOwnedByAccount("Playlist"))
 
     playlistDao.deletePlaylist(playlistId)
     call.respond(HttpStatusCode.OK, message = "Playlist Deleted")
@@ -91,7 +91,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handlePlaylistUpdate(
     } ?: return
 
     val playlist = playlistDao.readPlaylist(playlistId) ?: return call.respond(ErrorResponse.notFound("Playlist"))
-    if (playlist.owner.id != account.id) return call.respond(ErrorResponse.notOwnedByAccount("Playlist"))
+    if (transaction { playlist.owner.id} != account.id) return call.respond(ErrorResponse.notOwnedByAccount("Playlist"))
 
     playlistDao.updatePlaylist(playlist.id.value, playlistInfo.name)
     call.respond(HttpStatusCode.OK, message = "Playlist Updated")

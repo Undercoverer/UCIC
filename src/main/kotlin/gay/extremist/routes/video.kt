@@ -56,7 +56,11 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleVideoSearch() {
             videoDao.searchAndSortVideosByTitleFuzzy(title).sortBy(SortMethod.fromString(sortBy), order != "desc")
         }
     } else {
-        videoDao.searchVideosByTitleFuzzyAndTags(title, tags).sortBy(SortMethod.fromString(sortBy), order != "desc")
+        if (sortBy == "similarity"){
+            videoDao.searchVideosByTitleFuzzyAndTags(title, tags)
+        } else {
+            videoDao.searchVideosByTitleFuzzyAndTags(title, tags).sortBy(SortMethod.fromString(sortBy), order != "desc")
+        }
     }
 
     call.respond(videos.map(Video::toDisplayResponse))
@@ -206,10 +210,12 @@ suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteVideo() {
         return call.respond(ErrorResponse.notOwnedByAccount("Video"))
     }
     if ((account.token != token)) return call.respond(ErrorResponse.accountTokenInvalid)
-    if (File("$BASE_VIDEO_STORAGE_PATH/${video.id.value}").deleteRecursively()) return call.respond(ErrorResponse.videoDeleteFailed)
+    if (! File("$BASE_VIDEO_STORAGE_PATH/${video.id.value}").deleteRecursively()) {
+        return call.respond(ErrorResponse.videoDeleteFailed)
+    }
 
     videoDao.deleteVideo(videoId)
-    call.respond(HttpStatusCode.NoContent)
+    call.respond(HttpStatusCode.OK, "Video Deleted")
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetVideo() = with(call) {

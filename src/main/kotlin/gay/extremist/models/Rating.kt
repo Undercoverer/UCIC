@@ -7,6 +7,7 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.ReferenceOption
+import org.jetbrains.exposed.sql.transactions.transaction
 
 object Ratings: IntIdTable() {
     val videoID: Column<EntityID<Int>> = reference("videoID", Videos, onDelete = ReferenceOption.CASCADE)
@@ -26,7 +27,7 @@ class Rating(id: EntityID<Int>): Entity<Int>(id) {
     var rating by Ratings.rating
 
     fun toResponse() = RatingResponse(
-        id.value, video.toDisplayResponse(), account.toDisplayResponse(), rating
+        id.value, transaction {  video.toDisplayResponse() }, transaction{ account.toDisplayResponse() }, rating
     )
 
     override fun equals(other: Any?): Boolean {

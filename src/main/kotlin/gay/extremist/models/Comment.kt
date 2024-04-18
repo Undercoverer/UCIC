@@ -1,5 +1,6 @@
 package gay.extremist.models
 
+import gay.extremist.util.DatabaseFactory.dbQuery
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
@@ -7,6 +8,7 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.ReferenceOption
+import org.jetbrains.exposed.sql.transactions.transaction
 
 object Comments: IntIdTable() {
     val accountID: Column<EntityID<Int>>  = reference("accountID", Accounts, onDelete = ReferenceOption.CASCADE)
@@ -27,16 +29,16 @@ class Comment(id: EntityID<Int>): Entity<Int>(id){
 
     fun toResponse() = CommentResponse(
         id.value,
-        account.toDisplayResponse(),
-        video.toDisplayResponse(),
+        transaction { account.toDisplayResponse() },
+        transaction { video.toDisplayResponse() },
         parentComment?.toResponseNonrecursive(),
         comment
     )
 
-    private fun toResponseNonrecursive() = CommentResponseNonrecursive(
+    fun toResponseNonrecursive() = CommentResponseNonrecursive(
         id.value,
-        account.toDisplayResponse(),
-        video.toDisplayResponse(),
+        transaction { account.toDisplayResponse() },
+        transaction { video.toDisplayResponse() },
         comment
     )
 
