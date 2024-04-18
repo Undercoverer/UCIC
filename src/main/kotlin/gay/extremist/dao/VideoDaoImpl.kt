@@ -1,10 +1,12 @@
 package gay.extremist.dao
 
-import gay.extremist.util.DatabaseFactory.dbQuery
 import gay.extremist.models.*
+import gay.extremist.util.DatabaseFactory.dbQuery
 import gay.extremist.util.similarity
 import org.jetbrains.exposed.sql.*
 import java.io.File
+import java.time.Clock
+import java.time.Duration
 
 
 class VideoDaoImpl : VideoDao {
@@ -59,6 +61,14 @@ class VideoDaoImpl : VideoDao {
         }
     }
 
+    override suspend fun readGeneralVideos(): List<Video> = dbQuery {
+        Video.find {
+            Videos.uploadDate greater java.time.LocalDateTime.from(
+                Clock.systemUTC().instant().minus(Duration.ofDays(7))
+            )
+        }.orderBy(Videos.viewCount to SortOrder.DESC).toList()
+    }
+
     override suspend fun addTagsToVideo(id: Int, tags: List<Tag>): Boolean = dbQuery {
         val video = Video.findById(id)
         val tagList = video?.tags
@@ -83,7 +93,7 @@ class VideoDaoImpl : VideoDao {
         }
     }
 
-    override suspend fun incrementViewCount(id: Int): Boolean = dbQuery{
+    override suspend fun incrementViewCount(id: Int): Boolean = dbQuery {
         return@dbQuery when (val video = Video.findById(id)) {
             null -> false
             else -> {

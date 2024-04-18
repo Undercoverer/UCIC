@@ -240,7 +240,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetAllAccounts(
     if (headers?.get("secret") != "meow") return
 
     val accounts = accountDao.readAccountAll().also {
-        if (it.isEmpty()) return call.respond(ErrorResponse.notFound("Account"))
+        if (it.isEmpty()) return call.respond(ErrorResponse.notFound("Accounts"))
     }
 
     call.respond(accounts.map(Account::toResponse))
