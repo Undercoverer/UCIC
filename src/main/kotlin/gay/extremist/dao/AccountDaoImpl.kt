@@ -38,7 +38,9 @@ class AccountDaoImpl : AccountDao {
             else -> {
                 account.username = username
                 account.email = email
-                account.password = password.hashCode().toString()
+                if (password.hashCode().toString() != account.password){
+                    account.password = password.hashCode().toString()
+                }
                 account.token = UUID.nameUUIDFromBytes((username + password.hashCode().toString()).toByteArray()).toString()
                 return@dbQuery account
             }

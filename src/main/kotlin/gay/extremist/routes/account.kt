@@ -56,15 +56,16 @@ fun Route.createAccountRoutes() = route("/accounts") {
 
 // 100% Done
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleUpdateAccount() {
+    val headers = requiredHeaders(headerToken, headerAccountId) ?: return
     val account = call.receiveCatching<RegistrationAccount>().onFailureOrNull {
         call.respond(ErrorResponse.schema.apply { data = it.message })
     } ?: return
 
-    val originalAccountId = accountDao.getIdByUsername(account.username) ?: return call.respond(ErrorResponse.notFound("Account"))
+    val originalAccount = accountDao.readAccount(headers[headerAccountId]?.toInt() ?: -1) ?: return call.respond(ErrorResponse.notFound("Account"))
 
-    val finalAccount = accountDao.updateAccount(originalAccountId, account.username, account.email, account.password) ?: return
+    val finalAccount = accountDao.updateAccount(originalAccount.id.value, account.username, account.email, account.password) ?: return
 
-    call.respond(finalAccount.toRegisteredAccountResponse())
+    call.respond(finalAccount.toResponse())
 }
 
 
