@@ -2,6 +2,7 @@ package gay.extremist.dao
 
 import gay.extremist.util.DatabaseFactory.dbQuery
 import gay.extremist.models.*
+import org.jetbrains.exposed.sql.and
 
 class RatingDaoImpl : RatingDao {
     override suspend fun createRating(video: Video, account: Account, rating: Int): Rating = dbQuery {
@@ -40,8 +41,7 @@ class RatingDaoImpl : RatingDao {
 
     override suspend fun getIdByVideoAndAccount(video: Video, account: Account): Int? = dbQuery {
         Rating.find {
-            Ratings.videoID eq video.id
-            Ratings.accountID eq account.id
+            (Ratings.videoID eq video.id) and (Ratings.accountID eq account.id)
         }   .firstOrNull()
             ?.id
             ?.value
