@@ -227,10 +227,12 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleAccountLogin() 
         call.respond(ErrorResponse.schema.apply { data = it.message })
     } ?: return
 
+    println(loginAccount.email + " : " + loginAccount.password + "-----------------------------------------------------------------------------------------")
     val token = accountDao.getToken(loginAccount.email, loginAccount.password)
         ?: return call.respond(ErrorResponse.accountIncorrectCredentials)
 
     val accountId = accountDao.getIdByEmail(loginAccount.email) ?: return
+    println(token + "--------------------------------------------------------------------------------------------------------------------------------------")
 
     call.respond(RegisteredAccount(token, accountId))
 }

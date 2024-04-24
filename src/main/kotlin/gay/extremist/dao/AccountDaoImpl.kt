@@ -17,7 +17,7 @@ class AccountDaoImpl : AccountDao {
                 this.username = username
                 this.email = email
                 this.password = hashedPassword
-                this.token = UUID.nameUUIDFromBytes((username + hashedPassword).toByteArray()).toString()
+                this.token = toToken(email, password)
             }
 
             else -> null
@@ -38,14 +38,19 @@ class AccountDaoImpl : AccountDao {
             else -> {
                 account.username = username
                 account.email = email
-                if (password.hashCode().toString() != account.password){
+                if (password == account.password){
+
+                } else if (password.hashCode().toString() != account.password){
                     account.password = password.hashCode().toString()
                 }
-                account.token = UUID.nameUUIDFromBytes((username + password.hashCode().toString()).toByteArray()).toString()
+                account.token = toToken(email, password)
                 return@dbQuery account
             }
         }
     }
+
+    private fun toToken(email: String, password: String) =
+        UUID.nameUUIDFromBytes((email + password.hashCode().toString()).toByteArray()).toString()
 
     override suspend fun deleteAccount(id: Int): Boolean = dbQuery {
         when (val account = Account.findById(id)) {
@@ -59,10 +64,9 @@ class AccountDaoImpl : AccountDao {
 
     override suspend fun getToken(email: String, password: String): String? = dbQuery {
         Account.find {
-            Accounts.email eq email
-            Accounts.password eq password.hashCode().toString().also {
+            (Accounts.email eq email) and (Accounts.password eq password.hashCode().toString().also {
                 println(password.hashCode().toString())
-            }
+            })
         }.firstOrNull()?.token
     }
 
