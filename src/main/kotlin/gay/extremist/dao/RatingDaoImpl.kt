@@ -42,15 +42,17 @@ class RatingDaoImpl : RatingDao {
     override suspend fun getIdByVideoAndAccount(video: Video, account: Account): Int? = dbQuery {
         Rating.find {
             (Ratings.videoID eq video.id) and (Ratings.accountID eq account.id)
-        }   .firstOrNull()
-            ?.id
-            ?.value
+        }.firstOrNull()?.id?.value
     }
 
     override suspend fun createOrUpdateRating(video: Video, account: Account, rating: Int): Unit = dbQuery {
         val id = getIdByVideoAndAccount(video, account)
 
         if (id == null) createRating(video, account, rating) else updateRating(id, rating)
+    }
+
+    override suspend fun getAverageRating(video: Video) = dbQuery {
+        video.getRating()
     }
 }
 

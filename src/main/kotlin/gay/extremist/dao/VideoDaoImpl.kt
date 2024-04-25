@@ -5,8 +5,6 @@ import gay.extremist.util.DatabaseFactory.dbQuery
 import gay.extremist.util.similarity
 import org.jetbrains.exposed.sql.*
 import java.io.File
-import java.time.Clock
-import java.time.Duration
 import java.time.LocalDateTime
 
 
@@ -65,7 +63,7 @@ class VideoDaoImpl : VideoDao {
     override suspend fun readGeneralVideos(): List<Video> = dbQuery {
         val sevenDaysAgo = LocalDateTime.now().minusDays(7)
         Video.find {
-            Videos.uploadDate greaterEq  sevenDaysAgo
+            Videos.uploadDate greaterEq sevenDaysAgo
         }.orderBy(Videos.viewCount to SortOrder.DESC).toList()
     }
 
@@ -105,20 +103,17 @@ class VideoDaoImpl : VideoDao {
 
     override suspend fun searchAndSortVideosByTitleFuzzy(title: String): List<Video> = dbQuery {
         val titleSimilarity = Videos.title similarity title
-        Video.find { titleSimilarity greater 0.25 }
-            .orderBy(titleSimilarity to SortOrder.DESC)
-            .toList()
+        Video.all().orderBy(titleSimilarity to SortOrder.DESC).toList()
     }
 
     override suspend fun searchVideosByTitleFuzzyAndTags(title: String, tags: List<String>): List<Video> = dbQuery {
         val titleSimilarity = Videos.title similarity title
         (Videos innerJoin TagLabelsVideo innerJoin Tags)
-            .select { titleSimilarity greater 0.25 and Tags.tag.inList(tags) }
+            .select { Tags.tag.inList(tags) }
             .orderBy(titleSimilarity to SortOrder.DESC)
             .map { Video.findById(it[Videos.id])!! }
 
     }
-
 
     override suspend fun getCommentsOnVideo(id: Int): List<Comment> = dbQuery {
         readVideo(id)?.comments?.toList() ?: emptyList()

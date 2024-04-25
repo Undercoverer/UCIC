@@ -21,8 +21,6 @@ fun Route.createTagRoutes() = route("/tags") {
         post("/follow") { handleFollowTag() }
         post("/unfollow") { handleUnfollowTag() }
     }
-
-    //    TODO Please let me know any more tag endpoints you want as I cannot think of any more
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleFollowTag() {

@@ -239,8 +239,8 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleAccountLogin() 
 
 // 100% Done
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetAllAccounts() {
-    val headers = requiredHeaders("secret")
-    if (headers?.get("secret") != "meow") return
+    val headers = requiredHeaders("secret") ?: return
+    if (headers["secret"] != "meow") return
 
     val accounts = accountDao.readAccountAll().also {
         if (it.isEmpty()) return call.respond(ErrorResponse.notFound("Accounts"))

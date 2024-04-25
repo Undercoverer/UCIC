@@ -3,7 +3,6 @@ package gay.extremist.dao
 import gay.extremist.models.Account
 import gay.extremist.models.Rating
 import gay.extremist.models.Video
-import org.jetbrains.exposed.dao.id.EntityID
 
 interface RatingDao {
     suspend fun createRating(video: Video, account: Account, rating: Int): Rating
@@ -13,4 +12,5 @@ interface RatingDao {
     suspend fun deleteRating(id: Int): Boolean
     suspend fun getIdByVideoAndAccount(video: Video, account: Account): Int?
     suspend fun createOrUpdateRating(video: Video, account: Account, rating: Int)
+    suspend fun getAverageRating(video: Video): Double
 }

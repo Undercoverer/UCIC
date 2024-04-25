@@ -1,13 +1,13 @@
 package gay.extremist.routes
 
 import gay.extremist.dao.accountDao
-import io.ktor.server.routing.*
 import gay.extremist.dao.ratingDao
 import gay.extremist.dao.videoDao
 import gay.extremist.util.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
 
 fun Route.createRatingRoutes() = route("/ratings") {
@@ -18,9 +18,15 @@ fun Route.createRatingRoutes() = route("/ratings") {
         post { handleUpdateRating() }
         delete { handleDeleteRating() }
     }
-    route("/on") {
-        get { handleGetIdByVideoAndAccount() }
-    }
+    get("/on") { handleGetIdByVideoAndAccount() }
+    get("/averageOn/{id}") { handleGetAverageRatingByVideo() }
+}
+
+private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetAverageRatingByVideo() {
+    val videoId = idParameter() ?: return
+    val video = videoDao.readVideo(videoId) ?: return call.respond(ErrorResponse.notFound("Video"))
+
+    call.respond(ratingDao.getAverageRating(video))
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleCreateRating() {
@@ -66,14 +72,14 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleDeleteRating() 
             ErrorResponse.notFound("Account")
         )
     if (headers[headerToken] != account.token) return call.respond(ErrorResponse.accountTokenInvalid)
-    val rating = ratingDao.readRating(id) ?: return call.respond(ErrorResponse.notFound("Rating"))
+    ratingDao.readRating(id) ?: return call.respond(ErrorResponse.notFound("Rating"))
     ratingDao.deleteRating(id)
     call.respondText(status = HttpStatusCode.NoContent) { "Rating successfully deleted" }
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetIdByVideoAndAccount() {
     val headers = requiredHeaders(headerVideoId, headerAccountId, headerToken) ?: return
-    val videoId = videoDao.readVideo(convert(headers[headerVideoId], String::toInt) ?: return) ?: return call.respond(
+    val video = videoDao.readVideo(convert(headers[headerVideoId], String::toInt) ?: return) ?: return call.respond(
         ErrorResponse.notFound("Video")
     )
     val accountId =
@@ -81,7 +87,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.handleGetIdByVideoAnd
             ErrorResponse.notFound("Account")
         )
     if (headers[headerToken] != accountId.token) return call.respond(ErrorResponse.accountTokenInvalid)
-    val id = ratingDao.getIdByVideoAndAccount(videoId, accountId) ?: return call.respond(
+    val id = ratingDao.getIdByVideoAndAccount(video, accountId) ?: return call.respond(
         ErrorResponse.notFound("Rating")
     )
     call.respond(id)

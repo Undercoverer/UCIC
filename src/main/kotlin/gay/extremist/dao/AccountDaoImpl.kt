@@ -38,9 +38,7 @@ class AccountDaoImpl : AccountDao {
             else -> {
                 account.username = username
                 account.email = email
-                if (password == account.password){
-
-                } else if (password.hashCode().toString() != account.password){
+                if (password.hashCode().toString() != account.password){
                     account.password = password.hashCode().toString()
                 }
                 account.token = toToken(email, password)
@@ -105,18 +103,8 @@ class AccountDaoImpl : AccountDao {
     }
 
     override suspend fun searchAccountsFuzzy(username: String): List<Account> = dbQuery {
-//        val conn = TransactionManager.current().connection
-//        val query = "SELECT * FROM accounts WHERE similarity(username, ?) > 0.5 ORDER BY similarity(username, ?) DESC"
-//        val statement = conn.prepareStatement(query, false).apply { set(1, username) }
-//        val resultSet = statement.executeQuery()
-//        val videos = mutableListOf<Account>()
-//        while (resultSet.next()) Account.findById(resultSet.getInt("id")).let { videos.add(it!!) }
-//        return@dbQuery videos
-        // TODO MAKE SURE THIS WORKS RIGHT
         val nameSimilarity = Accounts.username similarity username
-        Account.find {
-            nameSimilarity greater 0.5
-        }.orderBy(
+        Account.all().orderBy(
             nameSimilarity to SortOrder.DESC
         ).toList()
     }
