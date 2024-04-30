@@ -136,7 +136,10 @@ class VideoConverter {
         }
 
         private fun executeCommand(command: Array<String>): CompletableFuture<Process>? {
-            val process = ProcessBuilder(*command).start()
+            val process = ProcessBuilder(*command)
+                .redirectError(ProcessBuilder.Redirect.DISCARD)
+                .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                .start()
             return process.onExit()
         }
     }

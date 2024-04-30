@@ -13,7 +13,7 @@ import kotlin.random.Random
 const val TOTAL_ACCOUNTS = 10
 val RANDOM = Random.Default
 
-fun main() {
+fun main_() {
     init()
     transaction {
         for (i in 1..TOTAL_ACCOUNTS) {
